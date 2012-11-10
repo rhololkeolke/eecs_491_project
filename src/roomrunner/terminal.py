@@ -20,3 +20,25 @@ class Color(object):
     @staticmethod
     def red(input):
         return Color.RED + input + Color.ENDC
+
+class Output(object):
+    import curses
+
+    def __init__(self, xpos, ypos, height, width):
+        self.pos = (xpos, ypos)
+        self.dim = (height, width)
+        
+        self.stdscr = Output.curses.initscr()
+
+        Output.curses.noecho()
+        Output.curses.cbreak()
+
+        self.stdscr.keypad(1)
+
+        self.stdscr.nodelay(1)
+
+    def __del__(self):
+        Output.curses.nocbreak()
+        self.stdscr.keypad(0)
+        Output.curses.echo()
+        Output.curses.endwin()
