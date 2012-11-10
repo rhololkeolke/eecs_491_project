@@ -7,6 +7,8 @@ import os
 
 from agent import Agent
 
+from time import sleep
+
 import pdb
 
 class RoomRunner(object):
@@ -97,7 +99,8 @@ class RoomRunner(object):
             init_x = np.random.random_integers(0, self.grid.shape[0]-1)
             init_y = np.random.random_integers(0, self.grid.shape[1]-1)
 
-            while(self.grid[init_y, init_x] == RoomRunner.__wall_sym):
+            while(self.grid[init_y, init_x] == RoomRunner.__wall_sym and \
+                  (init_y, init_y) not in self.goals):
                 init_x = np.random.random_integers(0, self.grid.shape[0]-1)
                 init_y = np.random.random_integers(0, self.grid.shape[1]-1)
             
@@ -108,14 +111,31 @@ class RoomRunner(object):
             while((curr_state[0], curr_state[1]) not in self.goals):
                 total_steps += 1
                 selected_action = agent.get_action(curr_state, RoomRunner.actions)
+
+                self.grid[curr_state[1], curr_state[0]] = RoomRunner.__empty_sym
+
+                prev_state = curr_state
                 
                 curr_state = self.__execute_action(curr_state, selected_action)
+
+                
+                self.grid[curr_state[1], curr_state[0]] = RoomRunner.__agent_sym
+                
 
                 if(visualize):
                     os.system('cls' if os.name=='nt' else 'clear')
                     print "episode %i" % eps
                     print
+                    print "executing action %s" % selected_action
+                    print
                     print self
+                    print
+                    print prev_state
+                    print
+                    print curr_state
+                    print
+                    sleep(.5)
+                    #raw_input("Press Enter to continue...")
 
                 if((curr_state[0], curr_state[1]) in self.goals):
                     reward = self.goals[(curr_state[0], curr_state[1])]
@@ -141,17 +161,24 @@ class RoomRunner(object):
                 print self
 
     def __execute_action(self, state, action):
+        h = self.grid.shape[0]
+        w = self.grid.shape[1]
+
+        newstate = state.copy()
         if action == 'up':
-            pass
+            if(state[1] - 1 >= 0 and self.grid[state[1]-1, state[0]] != RoomRunner.__wall_sym):
+                newstate[1] -= 1
         elif action == 'right':
-            pass
+            if(state[0] + 1 < w and self.grid[state[1], state[0]+1] != RoomRunner.__wall_sym):
+                newstate[0] += 1
         elif action == 'down':
-            pass
+            if(state[1] + 1 < h and self.grid[state[1]+1, state[0]] != RoomRunner.__wall_sym):
+                newstate[1] += 1
         elif action == 'left':
-            pass
-        else:
-            pass
-        return state.copy()
+            if(state[0] - 1 >= 0 and self.grid[state[1], state[0]-1] != RoomRunner.__wall_sym):
+                newstate[0] -= 1
+
+        return newstate
             
 
 if __name__ == "__main__":
@@ -169,5 +196,9 @@ if __name__ == "__main__":
 
     a = Agent()
     
-    rr.run_policy(a, num_eps=1)
+    (total_rewards, total_steps) = rr.run_policy(a, num_eps=1)
+
+    print total_rewards
+    print total_steps
+    print float(total_rewards)/total_steps
     
