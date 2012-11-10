@@ -5,7 +5,7 @@ import yaml
 from terminal import Color
 import os
 
-from agent import Agent
+from agent import Agent, ControlledAgent
 
 from time import sleep
 
@@ -88,9 +88,9 @@ class RoomRunner(object):
         return grid_rep
 
 
-    def run_policy(self, agent, num_eps=1, visualize=True):
+    def run_episodes(self, agent, num_eps=1, learn=True, visualize=True):
         total_rewards = 0
-        total_steps = 0
+        total_steps = 1
 
         print
         print "Running %i episodes" % num_eps
@@ -107,6 +107,16 @@ class RoomRunner(object):
             curr_state = np.array([init_x, init_y])
             
             self.grid[init_y, init_x] = RoomRunner.__agent_sym
+
+            if(visualize):
+                os.system('cls' if os.name=='nt' else 'clear')
+                print "episode %i" % eps
+                print
+                print self
+                print
+                print "current state: %s" % curr_state
+                print
+                sleep(.5)            
 
             while((curr_state[0], curr_state[1]) not in self.goals):
                 total_steps += 1
@@ -130,9 +140,9 @@ class RoomRunner(object):
                     print
                     print self
                     print
-                    print prev_state
+                    print "previous state: %s" % prev_state
                     print
-                    print curr_state
+                    print "current state: %s" % curr_state
                     print
                     sleep(.5)
                     #raw_input("Press Enter to continue...")
@@ -142,6 +152,7 @@ class RoomRunner(object):
                     print
                     print "Goal state (%i, %i) reached. Reward of %i obtained" % (
                            curr_state[0], curr_state[1], reward)
+                    print
                           
                     total_rewards += reward
                     break
@@ -149,16 +160,6 @@ class RoomRunner(object):
             self.grid[curr_state[1], curr_state[0]] = RoomRunner.__empty_sym
                 
         return (total_rewards, total_steps)
-
-    def learn_policy(self, agent, num_eps=1, visualize=True):
-        print
-        print "Learning from %i episodes" % num_eps
-        print
-        for eps in range(1, num_eps+1):
-            if(visualize):
-                print "episode %i" % eps
-                print
-                print self
 
     def __execute_action(self, state, action):
         h = self.grid.shape[0]
@@ -190,15 +191,13 @@ if __name__ == "__main__":
 
     path = sys.argv[1]
 
-    
-
     rr = RoomRunner(path)
 
-    a = Agent()
+    a = ControlledAgent()
     
-    (total_rewards, total_steps) = rr.run_policy(a, num_eps=1)
+    (total_rewards, total_steps) = rr.run_episodes(a, num_eps=1, learn=False)
 
-    print total_rewards
-    print total_steps
-    print float(total_rewards)/total_steps
+    print "total rewards: %f" % total_rewards
+    print "total steps: %i" % total_steps
+    print "rewards per step: %f" % (float(total_rewards)/total_steps)
     
