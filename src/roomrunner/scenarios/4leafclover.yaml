@@ -1,0 +1,41 @@
+# Configures a 4 room scenario with the connecting doors 
+# at the intersection of all 4 rooms. Rewards of +100
+# are at each of the far corners
+#
+# Looks like a clover hence the name
+
+type: simple
+height: 9
+width:  9
+walls:
+  -
+    y: 5
+  -
+    x: 5
+doors:
+  -
+    x: 5
+    y: 5
+  -
+    x: 4
+    y: 5
+  -
+    x: 6
+    y: 5
+goals:
+  -
+    x: 8
+    y: 8
+    r: 100
+  -
+    x: 2
+    y: 2
+    r: 100
+  -
+    x: 2
+    y: 8
+    r: 100
+  -
+    x: 8
+    y: 2
+    r: 100

@@ -1,0 +1,22 @@
+# Configures a 2 room scenario with 1 door
+#
+# This is the same example given in the
+# Learning Respresentation and Control in MDP paper
+# Figure 1
+
+type: simple
+height: 10
+width:  10
+walls:
+  -
+    y: 5
+doors:
+  -
+    x: 6
+    y: 5
+goals:
+  -
+    x: 9
+    y: 9
+    r: 100
+
