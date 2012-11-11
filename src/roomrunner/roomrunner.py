@@ -150,6 +150,8 @@ class RoomRunner(object):
                     print
                     sleep(.1)
                     #raw_input("Press Enter to continue...")
+                else:
+                    print "episode %i" % eps
 
                 if((curr_state[0], curr_state[1]) in self.goals):
                     reward = self.goals[(curr_state[0], curr_state[1])]
@@ -216,7 +218,7 @@ if __name__ == "__main__":
         print "Creating a new agent"
         a = QLearningRoomAgent(rr.grid.shape[0], rr.grid.shape[1], len(RoomRunner.actions))
 
-    (total_rewards, total_steps) = rr.run_episodes(a, num_eps=20, visualize=True)
+    (total_rewards, total_steps) = rr.run_episodes(a, num_eps=1000, visualize=True)
 
     print "total rewards: %f" % total_rewards
     print "total steps: %i" % total_steps
