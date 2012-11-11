@@ -7,7 +7,7 @@ class Agent(object):
     Will simply execute a random action
     """
     
-    def update(self, prev_s, action, curr_s):
+    def update(self, prev_s, action, curr_s, reward):
         pass
 
     def get_action(self, state, actions):
@@ -19,8 +19,9 @@ class ControlledAgent(object):
     Listens for keyboard input and acts accordingly
     """
 
-    def update(self, prev_s, action, curr_s):
-        pass
+    def update(self, prev_s, action, curr_s, reward):
+        print "Updating"
+        print
 
     def get_action(self, state, actions):
         choice = raw_input('Enter direction ')

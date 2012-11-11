@@ -28,7 +28,8 @@ class RoomRunner(object):
                 print "RoomRunner requires a configuration of type 'simple'. " + \
                       "Received a type of %s" % config['type']
                 sys.exit(1)
-            self.goals = config['goals']
+
+        self.step_cost = config.get('step_cost',0)
 
         # create the grid representing
         # this simple 2 room world
@@ -102,7 +103,7 @@ class RoomRunner(object):
             init_y = np.random.random_integers(0, self.grid.shape[1]-1)
 
             while(self.grid[init_y, init_x] == RoomRunner.__wall_sym or \
-                  (init_y, init_y) not in self.goals):
+                  (init_y, init_y) in self.goals):
                 init_x = np.random.random_integers(0, self.grid.shape[0]-1)
                 init_y = np.random.random_integers(0, self.grid.shape[1]-1)
             
@@ -129,6 +130,7 @@ class RoomRunner(object):
                 prev_state = curr_state
                 
                 curr_state = self.__execute_action(curr_state, selected_action)
+
 
                 
                 self.grid[curr_state[1], curr_state[0]] = RoomRunner.__agent_sym
@@ -157,7 +159,16 @@ class RoomRunner(object):
                     print
                           
                     total_rewards += reward
+
+                    if(learn):
+                        agent.update(prev_state, selected_action, curr_state, reward)
+                        
                     break
+                else:
+                    total_rewards += self.step_cost
+                    
+                    if(learn):
+                        agent.update(prev_state, selected_action, curr_state, self.step_cost)
 
             self.grid[curr_state[1], curr_state[0]] = RoomRunner.__empty_sym
                 
