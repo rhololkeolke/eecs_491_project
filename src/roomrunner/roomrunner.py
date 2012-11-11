@@ -2,6 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import yaml
 
+import pickle
+
 from terminal import Color
 import os
 
@@ -99,7 +101,7 @@ class RoomRunner(object):
             init_x = np.random.random_integers(0, self.grid.shape[0]-1)
             init_y = np.random.random_integers(0, self.grid.shape[1]-1)
 
-            while(self.grid[init_y, init_x] == RoomRunner.__wall_sym and \
+            while(self.grid[init_y, init_x] == RoomRunner.__wall_sym or \
                   (init_y, init_y) not in self.goals):
                 init_x = np.random.random_integers(0, self.grid.shape[0]-1)
                 init_y = np.random.random_integers(0, self.grid.shape[1]-1)
@@ -183,7 +185,7 @@ class RoomRunner(object):
             
 
 if __name__ == "__main__":
-    import sys, curses
+    import sys, os
 
     if len(sys.argv) != 2:
         print "A filename is required"
@@ -193,11 +195,23 @@ if __name__ == "__main__":
 
     rr = RoomRunner(path)
 
-    a = ControlledAgent()
-    
-    (total_rewards, total_steps) = rr.run_episodes(a, num_eps=1, learn=False)
+    try:
+        with open('agent.pickle', 'r') as f:
+            print "Loading pickled agent"
+            a = pickle.load(f)
+    except IOError:
+        print "No pickled agent found."
+        print "Creating a new agent"
+        a = ControlledAgent()
+
+    (total_rewards, total_steps) = rr.run_episodes(a, num_eps=2)
 
     print "total rewards: %f" % total_rewards
     print "total steps: %i" % total_steps
     print "rewards per step: %f" % (float(total_rewards)/total_steps)
+
+    print
+    print "Saving the agent"
+    with open('agent.pickle', 'w') as f:
+        pickle.dump(a, f, pickle.HIGHEST_PROTOCOL)
     
