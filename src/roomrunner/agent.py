@@ -62,12 +62,13 @@ class ControlledAgent(Agent):
         
 class QLearningAgent(Agent):
 
-    def __init__(self, q_values, gamma=.8, alpha=.1, decay_rate=.01):
+    def __init__(self, q_values, gamma=.8, alpha=.1, decay_rate=.01, glie=True):
         self.q_values = q_values
         self.gamma = gamma
         self.epsilon = 1
         self.decay_rate = decay_rate
         self.alpha = alpha
+        self.glie=glie
 
     def episode_over(self):
         pass
@@ -84,7 +85,7 @@ class QLearningAgent(Agent):
         self.q_values[prev_s+(action,)] += self.alpha*td_error
         
     def get_action(self, state, actions):
-        if(np.random.rand() < self.epsilon):
+        if(self.glie and np.random.rand() < self.epsilon):
             return np.random.random_integers(0, len(actions)-1)
         else:
             return np.where(self.q_values[state] == np.max(self.q_values[state]))[0][0]
@@ -94,9 +95,9 @@ class QLearningAgent(Agent):
     
 class QLearningRoomAgent(QLearningAgent):
 
-    def __init__(self, h, w, num_actions):
+    def __init__(self, h, w, num_actions, glie=True):
         self.q_values = np.zeros((h,w,num_actions))
-        super(QLearningRoomAgent, self).__init__(self.q_values, decay_rate=.001)
+        super(QLearningRoomAgent, self).__init__(self.q_values, decay_rate=.001, glie=glie)
 
     def update(self, prev_s, action, curr_s, reward):
         prev_t = QLearningRoomAgent._totuple(prev_s)
