@@ -7,7 +7,7 @@ import pickle
 from terminal import Color
 import os
 
-from agent import Agent, ControlledAgent
+from agent import Agent, ControlledAgent, QLearningRoomAgent
 
 from time import sleep
 
@@ -148,7 +148,7 @@ class RoomRunner(object):
                     print
                     print "current state: %s" % curr_state
                     print
-                    sleep(.5)
+                    sleep(.1)
                     #raw_input("Press Enter to continue...")
 
                 if((curr_state[0], curr_state[1]) in self.goals):
@@ -161,14 +161,15 @@ class RoomRunner(object):
                     total_rewards += reward
 
                     if(learn):
-                        agent.update(prev_state, selected_action, curr_state, reward)
-                        
+                        agent.update(prev_state, (selected_action, RoomRunner.actions), curr_state, reward)
+
+                    agent.episode_over()
                     break
                 else:
                     total_rewards += self.step_cost
                     
                     if(learn):
-                        agent.update(prev_state, selected_action, curr_state, self.step_cost)
+                        agent.update(prev_state, (selected_action, RoomRunner.actions), curr_state, self.step_cost)
 
             self.grid[curr_state[1], curr_state[0]] = RoomRunner.__empty_sym
                 
@@ -213,14 +214,26 @@ if __name__ == "__main__":
     except IOError:
         print "No pickled agent found."
         print "Creating a new agent"
-        a = ControlledAgent()
+        a = QLearningRoomAgent(rr.grid.shape[0], rr.grid.shape[1], len(RoomRunner.actions))
 
-    (total_rewards, total_steps) = rr.run_episodes(a, num_eps=2)
+    (total_rewards, total_steps) = rr.run_episodes(a, num_eps=20, visualize=True)
 
     print "total rewards: %f" % total_rewards
     print "total steps: %i" % total_steps
     print "rewards per step: %f" % (float(total_rewards)/total_steps)
 
+    #print "Q values for action %s" %  RoomRunner.actions[0]
+    #print a.q_values[:,:,0].T
+    #print "Q values for action %s" % RoomRunner.actions[1]
+    #print a.q_values[:,:,1].T
+    #print "Q values for action %s" % RoomRunner.actions[2]
+    #print a.q_values[:,:,2].T
+    #print "Q values for action %s" % RoomRunner.actions[3]
+    #print a.q_values[:,:,3].T
+
+    print "Agent epsilon value"
+    print a.epsilon
+    
     print
     print "Saving the agent"
     with open('agent.pickle', 'w') as f:
