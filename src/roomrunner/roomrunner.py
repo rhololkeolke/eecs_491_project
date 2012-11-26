@@ -7,7 +7,7 @@ import pickle
 from terminal import Color
 import os
 
-from agent import Agent, ControlledAgent, QLearningRoomAgent
+from agent import Agent, ControlledAgent, QLearningRoomAgent, ProtoValueRoomAgent
 
 from time import sleep
 
@@ -18,7 +18,8 @@ class RoomRunner(object):
     __empty_sym = '-'
     __agent_sym = 'A'
 
-    actions = ['up', 'right', 'down', 'left']
+    #actions = ['up', 'right', 'down', 'left']
+    actions = ['right', 'left']
     
     def __init__(self, path):
         config = None
@@ -56,6 +57,8 @@ class RoomRunner(object):
         self.grid[height-1, :] = RoomRunner.__wall_sym
 
     def __add_walls(self, walls):
+        if walls is None:
+            return
         for wall in walls:
             if('x' in wall):
                 self.grid[:, wall['x']-1] = RoomRunner.__wall_sym
@@ -63,6 +66,8 @@ class RoomRunner(object):
                 self.grid[wall['y']-1, :] = RoomRunner.__wall_sym
 
     def __add_doors(self, doors):
+        if doors is None:
+            return
         for door in doors:
             x = door['x']
             y = door['y']
@@ -71,6 +76,8 @@ class RoomRunner(object):
 
     def __create_goals(self, goals):
         self.goals = {}
+        if goals is None:
+            return
         for goal in goals:
             self.goals[(goal['y']-1, goal['x']-1)] = goal['r']
 
@@ -91,25 +98,26 @@ class RoomRunner(object):
         return grid_rep
 
 
-    def run_episodes(self, agent, num_eps=1, learn=True, visualize=True):
+    def run_episodes(self, agent, num_eps=1, ep_length=None, learn=True, visualize=True):
         total_rewards = 0
         total_steps = 1
 
         print
         print "Running %i episodes" % num_eps
         print
+        #pdb.set_trace()
         for eps in range(1, num_eps+1):
-            init_x = np.random.random_integers(0, self.grid.shape[0]-1)
-            init_y = np.random.random_integers(0, self.grid.shape[1]-1)
+            init_x = np.random.random_integers(1, self.grid.shape[0]-1)
+            init_y = np.random.random_integers(1, self.grid.shape[1]-1)
 
-            while(self.grid[init_y, init_x] == RoomRunner.__wall_sym or \
+            while(self.grid[init_x, init_y] == RoomRunner.__wall_sym or \
                   (init_y, init_y) in self.goals):
                 init_x = np.random.random_integers(0, self.grid.shape[0]-1)
                 init_y = np.random.random_integers(0, self.grid.shape[1]-1)
             
             curr_state = np.array([init_x, init_y])
             
-            self.grid[init_y, init_x] = RoomRunner.__agent_sym
+            self.grid[init_x, init_y] = RoomRunner.__agent_sym
 
             if(visualize):
                 os.system('cls' if os.name=='nt' else 'clear')
@@ -121,11 +129,18 @@ class RoomRunner(object):
                 print
                 sleep(.5)            
 
+            step = 0
             while((curr_state[0], curr_state[1]) not in self.goals):
+                step += 1
+                if ep_length is not None and step > ep_length:
+                    agent.episode_over()
+                    break
+                    
                 total_steps += 1
                 selected_action = agent.get_action(curr_state, RoomRunner.actions)
 
-                self.grid[curr_state[1], curr_state[0]] = RoomRunner.__empty_sym
+                #pdb.set_trace()
+                self.grid[curr_state[0], curr_state[1]] = RoomRunner.__empty_sym
 
                 prev_state = curr_state
                 
@@ -133,7 +148,7 @@ class RoomRunner(object):
 
 
                 
-                self.grid[curr_state[1], curr_state[0]] = RoomRunner.__agent_sym
+                self.grid[curr_state[0], curr_state[1]] = RoomRunner.__agent_sym
                 
 
                 if(visualize):
@@ -173,8 +188,8 @@ class RoomRunner(object):
                     if(learn):
                         agent.update(prev_state, (selected_action, RoomRunner.actions), curr_state, self.step_cost)
 
-            self.grid[curr_state[1], curr_state[0]] = RoomRunner.__empty_sym
-                
+            self.grid[curr_state[0], curr_state[1]] = RoomRunner.__empty_sym
+
         return (total_rewards, total_steps)
 
     def __execute_action(self, state, action):
@@ -183,17 +198,17 @@ class RoomRunner(object):
 
         newstate = state.copy()
         if action == 'up':
-            if(state[1] - 1 >= 0 and self.grid[state[1]-1, state[0]] != RoomRunner.__wall_sym):
-                newstate[1] -= 1
-        elif action == 'right':
-            if(state[0] + 1 < w and self.grid[state[1], state[0]+1] != RoomRunner.__wall_sym):
-                newstate[0] += 1
-        elif action == 'down':
-            if(state[1] + 1 < h and self.grid[state[1]+1, state[0]] != RoomRunner.__wall_sym):
-                newstate[1] += 1
-        elif action == 'left':
-            if(state[0] - 1 >= 0 and self.grid[state[1], state[0]-1] != RoomRunner.__wall_sym):
+            if(state[0] - 1 >= 0 and self.grid[state[0]-1, state[1]] != RoomRunner.__wall_sym):
                 newstate[0] -= 1
+        elif action == 'right':
+            if(state[1] + 1 < w and self.grid[state[0], state[1]+1] != RoomRunner.__wall_sym):
+                newstate[1] += 1
+        elif action == 'down':
+            if(state[0] + 1 < h and self.grid[state[0]+1, state[1]] != RoomRunner.__wall_sym):
+                newstate[0] += 1
+        elif action == 'left':
+            if(state[1] - 1 >= 0 and self.grid[state[0], state[1]-1] != RoomRunner.__wall_sym):
+                newstate[1] -= 1
 
         return newstate
             
@@ -216,18 +231,23 @@ if __name__ == "__main__":
     except IOError:
         print "No pickled agent found."
         print "Creating a new agent"
-        a = QLearningRoomAgent(rr.grid.shape[0], rr.grid.shape[1], len(RoomRunner.actions))
+        #a = QLearningRoomAgent(rr.grid.shape[0], rr.grid.shape[1], len(RoomRunner.actions))
+        a = ProtoValueRoomAgent(rr.grid.shape[0], rr.grid.shape[1], len(RoomRunner.actions))
 
-    (total_rewards, total_steps) = rr.run_episodes(a, num_eps=1000, visualize=True)
+    #pdb.set_trace()
+    (total_rewards, total_steps) = rr.run_episodes(a, num_eps=1000, ep_length=20, learn=True, visualize=False)
 
+    laplacian = a.compute_laplacian()
+
+    pdb.set_trace()
     print "total rewards: %f" % total_rewards
     print "total steps: %i" % total_steps
     print "rewards per step: %f" % (float(total_rewards)/total_steps)
 
     #print "Q values for action %s" %  RoomRunner.actions[0]
-    #print a.q_values[:,:,0].T
+    #print a.q_values[:,:,0]
     #print "Q values for action %s" % RoomRunner.actions[1]
-    #print a.q_values[:,:,1].T
+    #print a.q_values[:,:,1]
     #print "Q values for action %s" % RoomRunner.actions[2]
     #print a.q_values[:,:,2].T
     #print "Q values for action %s" % RoomRunner.actions[3]
