@@ -1,0 +1,11 @@
+type: simple
+height: 3
+width: 7
+step_cost: 0
+walls:
+doors:
+goals:
+  -
+    x: 2
+    y: 2
+    r: 100
