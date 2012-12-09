@@ -232,14 +232,17 @@ if __name__ == "__main__":
         print "No pickled agent found."
         print "Creating a new agent"
         #a = QLearningRoomAgent(rr.grid.shape[0], rr.grid.shape[1], len(RoomRunner.actions))
-        a = ProtoValueRoomAgent(rr.grid.shape[0], rr.grid.shape[1], len(RoomRunner.actions))
+        a = ProtoValueRoomAgent(rr.grid.shape[0], rr.grid.shape[1], len(RoomRunner.actions), k=3)
 
-    #pdb.set_trace()
     (total_rewards, total_steps) = rr.run_episodes(a, num_eps=1000, ep_length=20, learn=True, visualize=False)
 
-    laplacian = a.compute_laplacian()
+    a.construct_graph()
+    a.compute_basis_functions()
+    a.compute_A_matrix()
+    a.compute_b_matrix()
 
     pdb.set_trace()
+    
     print "total rewards: %f" % total_rewards
     print "total steps: %i" % total_steps
     print "rewards per step: %f" % (float(total_rewards)/total_steps)

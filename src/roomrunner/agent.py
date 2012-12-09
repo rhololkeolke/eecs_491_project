@@ -149,12 +149,17 @@ class ProtoValueRoomAgent(Agent):
         self.k = k
 
         # weight matrix
-        self.weights = np.zeros((1,k))
+        # initialize weights to random values
+        # between -1 and 1
+        self.weights = np.random.rand(1,k)*2 - 1
 
         self.height = h
         self.width = w
 
-        self.eigen_vectors = np.zeros((h*w, k))
+        self.graph = SparseGraph(self.height*self.width)
+
+        self.eigen_vectors = None
+        self.eigen_vals = None
 
     def episode_over(self):
         self.trajectories.append([])
@@ -179,14 +184,11 @@ class ProtoValueRoomAgent(Agent):
             choice = np.random.random_integers(0, len(actions)-1)
             return actions[choice]
 
-
-    def compute_adjacency(self):
+    def construct_graph(self):
         """
         Given all of the samples for this agent instance
-        compute an adjacency matrix
+        construct an undirected graph of states
         """
-
-        adjacency = np.zeros((self.height*self.width, self.height*self.width))
         # loop through all trajectories in samples
         # for each state transition make the cell
         # 1 if for that state
@@ -201,32 +203,34 @@ class ProtoValueRoomAgent(Agent):
                 next_index = next_state[1]*self.height + next_state[0]
                 
                 # not sure if its okay to have 1's in the diaganols
-                adjacency[prev_index, next_index] = 1
-                adjacency[next_index, prev_index] = 1
+                if self.graph[prev_index, next_index] != 1:
+                    self.graph.addEdge(prev_index, next_index)
+        
 
-        return adjacency
-
-    def compute_degree_matrix(self, adjacency):
+    def adjacency_matrix(self):
+        """
+        Given all of the samples for this agent instance
+        compute an adjacency matrix
+        """
+        return self.graph.adjacencyMatrix()
+        
+    def degree_matrix(self):
         """
         Given an adjacency matrix compute the degree
         matrix for it
         """
-        degree = np.diag(sum(adjacency.T))
-        return degree
+        return np.diag(self.graph.outDegreeSequence())
 
-    def compute_laplacian(self):
+    def normalized_laplacian(self):
         """
-        This method computes the combinatorial laplacian.
+        This method computes the normalized symmetric laplacian.
 
-        L = (D-W)
+        L = D^(-1/2)*(D-W)*D^(-1/2)
 
         Where W is an adjacency matrix
         and D is the degree matrix (i.e. sum of the rows of W)
         """
-        adjacency = self.compute_adjacency()
-        degree_matrix = self.compute_degree_matrix(adjacency)
-
-        return degree_matrix - adjacency
+        return self.graph.normalisedLaplacianSym()
 
     def compute_basis_functions(self):
         """
@@ -234,9 +238,40 @@ class ProtoValueRoomAgent(Agent):
         by taking the k smoothest eigen vectors of
         the combinatorial laplacian
         """
+
+        self.eigen_vals, self.eigen_vectors = eigsh(self.normalized_laplacian(),
+                                         k = self.k,
+                                         #M = self.degree_matrix(),
+                                         which = 'SM')
+        
+
+    def compute_A_matrix(self, i):
+        """
+        This method computes the A matrix approximation
+        using the stored eigenfunctions and samples
+
+        See the paper for the formula
+        """
+        A = np.zeros((1,self.k))
+
+        for sample in trajectories[i]:
+            
+
+    def compute_b_matrix(self, i):
+        """
+        This method computes the b matrix approximation
+        using the stored eigenfunctions and samples
+
+        See the paper for the formula
+        """
         pass
-        
-        
+
+    def get_new_weights(self, i):
+        """
+        This method will compute the new weights
+        based off of the A matrix
+        """
+        pass
 
     @staticmethod
     def _totuple(a):
