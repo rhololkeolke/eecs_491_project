@@ -2,6 +2,8 @@ from lspiframework.simulator import Simulator as BaseSim
 from lspiframework.sample import Sample
 from lspiframework.policy import Policy, RandomPolicy
 import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib import mpl
 
 S = 20 # number of chain states
 A = 2 # number of chain actions
@@ -105,6 +107,18 @@ class Simulator(BaseSim):
 
         return [i for i in range(self.A)]
 
+    def get_transition_model(self):
+        """
+        Returns the transition model
+        """
+        return self.pr
+
+    def get_reward_model(self):
+        """
+        Returns the reward model
+        """
+        return self.rew
+
 def basis_pol(state=None, action=None):
     """
     Computes a set of polynomial (on "state") basis functions
@@ -188,23 +202,83 @@ def collect_samples(maxepisodes=10, maxsteps=500, policy=None):
 
     return samples
 
+def solve(policy):
+    """
+    Given a policy this function evaluates it
+    """
+    sim = Simulator()
+    pr = sim.get_transition_model()
+    rew = sim.get_reward_model()
+
+    dim = len(rew)
+
+    pa0 = np.squeeze( pr[:, 0, :])
+    pa1 = np.squeeze( pr[:, 1, :])
+
+    prob = np.zeros((dim, dim))
+    for i in range(1, dim+1):
+        a = policy.select_action(i)[0]
+        if a == 0:
+            prob[i,:] = pa0[i, :]
+        else:
+            prob[i,:] = pa1[i, :]
+
+    v = np.inv(np.eye(dim) - policy.discount*prob).dot(rew)
+
+    q1 = rew + policy.discount * pa0.dot(v)
+    q2 = rew + policy.discount * pa1.dot(v)
+    q = max(q1, q2)
+
+    return v, q1, q2, q
+
+def display_policy(policy, figure=None):
+    """
+    Plots the policy as a color map over all the states.
+
+    If a plot handle is provided it will use that plot.
+    Otherwise it will create a new plot
+
+    returns the plot handle that it used
+    """
+    S = chain_states()
+    actions = np.zeros((1, S))
+
+    for i in range(S):
+        actions[0,i] = policy.select_action(i)[0]
+
+    figure = plt.figure()
+    plt.imshow(actions)
+    cmap = plt.colorbar(boundaries=[0,1,2], values=[0,1])
+    plt.title('Policy Actions')
+    plt.xlabel('State')
+    plt.show()
+    
+    
+    
 if __name__ == '__main__':
     import lspiframework.lspi as lspi
+    import protovalueframework.pvf as pvf
 
     import pdb
 
-    maxiter = 8
+    k = 10
+    maxiter = 20
     epsilon = 10**(-5)
     #samples = uniform_samples()
     samples = collect_samples()
     discount = .9
-    basis = basis_pol
 
+    # construct a graph from the samples
+    graph = pvf.construct_graph(samples, S)
+
+    basis = pvf.create_basis_function(graph, S, A, k)
+    
     policy = initialize_policy(0, discount, basis)
 
-    pdb.set_trace()
-    
     final_policy, all_policies = lspi.lspi(maxiter,
                                            epsilon,
                                            samples,
                                            policy)
+
+    display_policy(final_policy)
+    pdb.set_trace()

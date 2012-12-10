@@ -44,6 +44,16 @@ def lstdq(samples, policy, new_policy):
         w = LA.pinv(A).dot(b)
 
     return w, A, b
+
+def qvalue(state, action, policy):
+    """
+    Calculates the Q value for a state action pair
+    given a policy
+    """
+    phi = policy.basis(state, action)
+    qvalue = phi.T.dot(policy.weights)
+
+    return qvalue
     
 def lspi(maxiter, epsilon, samples, initial_policy):
     """
