@@ -1,8 +1,14 @@
 import numpy as np
-import collections
+from policy import Policy
+from sample import Sample
+import lspi
+import pdb
 
 S = 20
 A = 2
+rew = np.zeros((S+1,1))
+rew[1] = 1
+rew[S] = 1
 
 def basis_pol(state=None, action=None):
     """
@@ -37,4 +43,41 @@ def basis_pol(state=None, action=None):
 
     return phi
 
+def create_chain_policy(explore, discount, basis):
+    return Policy(explore, discount, A, basis)
+
+def uniform_samples():
+    samples = []
+    for s in range(1,S+1):
+        for a in range(1,A+1):
+            for i in range(0,10):
+                if i< 9:
+                    if a == 2:
+                        samples.append(Sample(s, a, rew[s], min(S, s+1)))
+                    else:
+                        samples.append(Sample(s, a, rew[s], max(1,s-1)))
+                elif i == 9:
+                    if a == 1:
+                        samples.append(Sample(s,a,rew[s],min(S,s+1)))
+                    else:
+                        samples.append(Sample(s,a,rew[s],max(1,s-1)))
+                else:
+                    samples.append(Sample(s,a,rew[s],0,1))
+    return samples
+        
+
+if __name__ == '__main__':
+    import lspi
+
+    maxiter = 8
+    epsilon = 10**(-5)
+    samples = uniform_samples()
+    discount = .9
+    basis = basis_pol
+
     
+    policy = create_chain_policy(0, discount, basis)
+
+    pdb.set_trace()
+
+    final_policy, all_policies = lspi.lspi(maxiter, epsilon, samples, basis, discount, policy)
