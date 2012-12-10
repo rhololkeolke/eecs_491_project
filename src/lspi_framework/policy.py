@@ -17,7 +17,7 @@ class Policy(object):
         self.actions = actions
         self.basis = basis
         k = self.basis()
-        self.weights = np.zeros((k,1))
+        self.weights = np.zeros((k, 1))
 
     @classmethod
     def copy(cls, policy):
@@ -45,9 +45,9 @@ class Policy(object):
             actionphi = []
 
             # find the actions with maximum Q-value
-            for i in range(1,self.actions+1):
+            for i in range(1, self.actions+1):
                 phi = self.basis(state, i)
-                q = phi.T.dot( self.weights)[0][0]
+                q = phi.T.dot(self.weights)[0][0]
 
                 if q > bestq:
                     bestq = q
@@ -83,6 +83,10 @@ class RandomPolicy(Policy):
 
     @staticmethod
     def basis():
+        """
+        Just a dummy basis function
+        that will allow this policy to act randomly
+        """
         return np.ones(1)
 
     @classmethod
