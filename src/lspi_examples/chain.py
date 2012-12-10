@@ -1,5 +1,6 @@
 from lspiframework.simulator import Simulator as BaseSim
 from lspiframework.sample import Sample
+from lspiframework.policy import Policy
 import numpy as np
 
 S = 20 # number of chain states
@@ -129,9 +130,55 @@ def basis_pol(state=None, action=None):
     base = action * (numbasis/A)
 
     # compute the polynomial terms
-    phi[base] = 1
+    try:
+        phi[base] = 1
+    except IndexError:
+        pdb.set_trace()
+        print 'first exception'
 
     for i in range(1, degpol+1):
         phi[base+i] = phi[base+i-1] * (10.0*(state+1)/S)
 
     return phi
+
+def initialize_policy(explore, discount, basis):
+    return Policy(explore, discount, A, basis)
+
+def uniform_samples():
+    samples = []
+    rew = chain_reward()
+    for s in range(S):
+        for a in range(A):
+            for i in range(10):
+                if i<9:
+                    if a == 1:
+                        samples.append(Sample(s, a, rew[s][0], min(S-1, s+1)))
+                    else:
+                        samples.append(Sample(s, a, rew[s][0], max(0, s-1)))
+                elif i == 9:
+                    if a == 1:
+                        samples.append(Sample(s, a, rew[s][0], min(S-1, s+1)))
+                    else:
+                        samples.append(Sample(s, a, rew[s][0], max(0, s-1)))
+                else:
+                    samples.append(Sample(s, a, rew[s][0], 0, 1))
+
+    return samples
+
+if __name__ == '__main__':
+    import lspiframework.lspi as lspi
+
+    import pdb
+
+    maxiter = 8
+    epsilon = 10**(-5)
+    samples = uniform_samples()
+    discount = .9
+    basis = basis_pol
+
+    policy = initialize_policy(0, discount, basis)
+
+    final_policy, all_policies = lspi.lspi(maxiter,
+                                           epsilon,
+                                           samples,
+                                           policy)

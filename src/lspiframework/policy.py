@@ -45,7 +45,7 @@ class Policy(object):
             actionphi = []
 
             # find the actions with maximum Q-value
-            for i in range(1, self.actions+1):
+            for i in range(self.actions):
                 phi = self.basis(state, i)
                 q = phi.T.dot(self.weights)[0][0]
 
