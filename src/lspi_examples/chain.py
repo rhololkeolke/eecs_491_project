@@ -254,6 +254,30 @@ def display_policy(policy):
     plt.title('Policy Actions')
     plt.xlabel('State')
     plt.yticks([])
+
+def display_qvalues(policy, action=None):
+    """
+    Plots the Q values for each state action pair.
+    If no action is specified then the maximum Q-value
+    is shown
+    """
+
+    S = chain_states()
+    qvalues = np.zeros((1, S))
+
+    for i in range(S):
+        if action is None:
+            a = policy.select_action(i)[0]
+            qvalues[0, i] = lspi.qvalue(i, a, policy)
+        else:
+            qvalues[0, i] = lspi.qvalue(i, action, policy)
+
+    plt.imshow(qvalues)
+    plt.colorbar()
+
+    plt.title('Q Values')
+    plt.xlabel('State')
+    plt.yticks([])
     
     
 if __name__ == '__main__':
@@ -286,4 +310,8 @@ if __name__ == '__main__':
     display_policy(final_policy)
     plt.subplot(1,2,2)
     display_policy(all_policies[0])
+    plt.show()
+
+    plt.figure()
+    display_qvalues(final_policy)
     plt.show()
