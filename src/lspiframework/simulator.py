@@ -34,10 +34,3 @@ class Simulator(object):
         Returns a list of possible actions
         """
         return
-
-    @abc.abstractmethod
-    def get_state(self):
-        """
-        Returns the current state of the simulator
-        """
-        return
