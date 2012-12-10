@@ -1,6 +1,6 @@
 from lspiframework.simulator import Simulator as BaseSim
 from lspiframework.sample import Sample
-from lspiframework.policy import Policy
+from lspiframework.policy import Policy, RandomPolicy
 import numpy as np
 
 S = 20 # number of chain states
@@ -161,6 +161,33 @@ def uniform_samples():
 
     return samples
 
+def collect_samples(maxepisodes=10, maxsteps=500, policy=None):
+    """
+    Collects samples from the simulator using the policy
+    by running it at most maxepisodes episodes of each which
+    is at most maxsteps steps long
+    """
+
+    if policy is None:
+        policy = RandomPolicy(1.0, 0.0, A)
+
+    sim = Simulator()
+
+    samples = []
+    
+    for episode in range(maxepisodes):
+        # reset the simulator
+        sim.reset()
+
+        for step in range(maxsteps):
+            samples.append(sim.execute(policy.select_action(sim.state)[0]))
+            # if this was an absorbing state
+            # then start a new episode
+            if samples[-1].absorb:
+                break
+
+    return samples
+
 if __name__ == '__main__':
     import lspiframework.lspi as lspi
 
@@ -168,7 +195,8 @@ if __name__ == '__main__':
 
     maxiter = 8
     epsilon = 10**(-5)
-    samples = uniform_samples()
+    #samples = uniform_samples()
+    samples = collect_samples()
     discount = .9
     basis = basis_pol
 
