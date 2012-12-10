@@ -130,12 +130,8 @@ def basis_pol(state=None, action=None):
     base = action * (numbasis/A)
 
     # compute the polynomial terms
-    try:
-        phi[base] = 1
-    except IndexError:
-        pdb.set_trace()
-        print 'first exception'
-
+    phi[base] = 1
+    
     for i in range(1, degpol+1):
         phi[base+i] = phi[base+i-1] * (10.0*(state+1)/S)
 
@@ -156,7 +152,7 @@ def uniform_samples():
                     else:
                         samples.append(Sample(s, a, rew[s][0], max(0, s-1)))
                 elif i == 9:
-                    if a == 1:
+                    if a == 0:
                         samples.append(Sample(s, a, rew[s][0], min(S-1, s+1)))
                     else:
                         samples.append(Sample(s, a, rew[s][0], max(0, s-1)))
@@ -178,6 +174,8 @@ if __name__ == '__main__':
 
     policy = initialize_policy(0, discount, basis)
 
+    pdb.set_trace()
+    
     final_policy, all_policies = lspi.lspi(maxiter,
                                            epsilon,
                                            samples,
