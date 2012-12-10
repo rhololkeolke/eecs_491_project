@@ -231,7 +231,7 @@ def solve(policy):
 
     return v, q1, q2, q
 
-def display_policy(policy, figure=None):
+def display_policy(policy):
     """
     Plots the policy as a color map over all the states.
 
@@ -246,13 +246,14 @@ def display_policy(policy, figure=None):
     for i in range(S):
         actions[0,i] = policy.select_action(i)[0]
 
-    figure = plt.figure()
+
     plt.imshow(actions)
-    cmap = plt.colorbar(boundaries=[0,1,2], values=[0,1])
+    cbar = plt.colorbar(boundaries=[0,1,2], values=[0,1],
+                        ticks=[0,1], shrink=.5, spacing='uniform')
+    cbar.ax.set_yticklabels((r'left', r'right'))
     plt.title('Policy Actions')
     plt.xlabel('State')
-    plt.show()
-    
+    plt.yticks([])
     
     
 if __name__ == '__main__':
@@ -280,5 +281,9 @@ if __name__ == '__main__':
                                            samples,
                                            policy)
 
+    plt.figure()
+    plt.subplot(1,2,1)
     display_policy(final_policy)
-    pdb.set_trace()
+    plt.subplot(1,2,2)
+    display_policy(all_policies[0])
+    plt.show()
