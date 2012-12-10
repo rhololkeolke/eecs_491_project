@@ -82,7 +82,7 @@ class RandomPolicy(Policy):
     """
 
     @staticmethod
-    def basis():
+    def basis(state=None, action=None):
         """
         Just a dummy basis function
         that will allow this policy to act randomly
