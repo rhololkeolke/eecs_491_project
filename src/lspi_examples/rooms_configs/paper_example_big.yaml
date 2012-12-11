@@ -1,0 +1,22 @@
+actions: manhattan
+step cost: 0.0
+succprob: .9
+height: 15
+width: 15
+walls:
+  horizontal:
+    - 0
+    - 6
+    - 14
+  vertical:
+    - 0
+    - 14
+doors:
+  -
+    x: 7
+    y: 6
+absorbing:
+  -
+    x: 13
+    y: 13
+    r: 100
