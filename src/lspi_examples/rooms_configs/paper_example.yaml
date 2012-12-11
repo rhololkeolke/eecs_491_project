@@ -1,6 +1,6 @@
 actions: manhattan
 step cost: 0.0
-succprob: 1.0
+succprob: .9
 height: 10
 width: 10
 walls:
