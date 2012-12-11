@@ -84,7 +84,7 @@ class Simulator(BaseSim):
             exit(1)
 
         # if no step cost is specified then assume 0 step cost
-        self.step_cost = config.get('step cost', 0)
+        self.step_cost = float(config.get('step cost', 0.0))
 
         # if no action set is specified then used manhattan
         if config.get('actions', 'manhattan').lower() == 'manhattan':
@@ -147,11 +147,15 @@ class Simulator(BaseSim):
         if absorbing is not None:
             for absorb in absorbing:
                 state = (absorb['y'], absorb['x'])
+
+                if self.grid[state[0], state[1]] == Simulator.__wall_sym:
+                    continue
+                    
                 self.absorb[state] = absorb['r']
 
-                self.grid[state[0], state[1]] = Simulator.__goal_sym
+                #self.grid[state[0], state[1]] = Simulator.__goal_sym
 
-                index = self.coord_to_index(state)
+                index = self.state_to_index(state)
                 Simulator.rewards[index] = absorb['r']
 
 
@@ -177,7 +181,12 @@ class Simulator(BaseSim):
                     grid_rep.append(Color.red(' %s ' % elem))
                 else:
                     if (i,j) in self.absorb:
-                       grid_rep.append(Color.green(' %s ' % elem))
+                        if self.absorb[(i, j)] > 0:
+                            grid_rep.append(Color.green(' %s ' % Simulator.__goal_sym))
+                        elif self.absorb[(i, j)] < 0:
+                            grid_rep.append(Color.red(' %s ' % Simulator.__goal_sym))
+                        else:
+                            grid_rep.append(' %s ' % Simulator.__goal_sym)
                     elif (i, j) == self.state:
                         grid_rep.append(Color.yellow(' %s ' % Simulator.__agent_sym))
                     else:
@@ -204,7 +213,7 @@ class Simulator(BaseSim):
         while self.state is None:
             row = np.random.randint(self.h)
             col = np.random.randint(self.w)
-            if self.grid((row, col)) != Simulator.__wall_sym and \
+            if self.grid[(row, col)] != Simulator.__wall_sym and \
                self.absorb.get((row, col), None) is None:
                 self.state = (row, col)
 
@@ -222,15 +231,68 @@ class Simulator(BaseSim):
         Returns a Sample object representing this transition
         """
 
-        return
+        index = self.state_to_index(self.state)
+        
+        if np.random.rand() > self.succprob:
+            # randomly pick an incorrect action
+            selection = int(np.random.rand()*(Simulator.actions-1))
+            if selection >= action:
+                selection += 1
+        else:
+            selection = action
+
+        # find the new row
+        if selection in [0, 4, 7]:
+            # moving up
+            newrow = max(0, min(self.h-1, self.state[0]-1))
+        elif selection in [2, 5, 6]:
+            # moving down
+            newrow = max(0, min(self.h-1, self.state[0]+1))
+        else:
+            # not moving up or down
+            newrow = self.state[0]
+
+        # find the new column
+        if selection in [1, 4, 5]:
+            # moving right
+            newcol = max(0, min(self.w-1, self.state[1]+1))
+        elif selection in [3, 6, 7]:
+            # moving left
+            newcol = max(0, min(self.w-1, self.state[1]-1))
+        else:
+            # not moving left or right
+            newcol = self.state[1]
+
+        if self.grid[newrow, newcol] == Simulator.__wall_sym:
+            newrow = self.state[0]
+            newcol = self.state[1]
+            
+        nextstate = (newrow, newcol)
+        nextindex = self.state_to_index(nextstate)
+
+        if nextstate in self.absorb:
+            absorb = True
+        else:
+            absorb = False
+
+        reward = Simulator.rewards[nextindex, 0] + self.step_cost
+
+        sample = Sample(index, action, reward, nextindex, absorb)
+
+        self.state = nextstate
+
+        return sample
+        
+                
 
 if __name__ == '__main__':
     import sys
+    import pdb
 
     path = sys.argv[1]
 
     sim = Simulator(path)
 
-    print sim
+    pdb.set_trace()
 
     
