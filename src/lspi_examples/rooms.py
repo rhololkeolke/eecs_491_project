@@ -19,10 +19,13 @@ starting location.
 from lspiframework.simulator import Simulator as BaseSim
 from lspiframework.sample import Sample
 from lspiframework.policy import Policy, RandomPolicy
+from lspiframework import lspi
+from protovalueframework import pvf
 import numpy as np
 import yaml
 from terminal import Color
-
+import os
+from time import sleep
     
 
 class Simulator(BaseSim):
@@ -283,7 +286,95 @@ class Simulator(BaseSim):
 
         return sample
         
-                
+def collect_samples(sim, maxepisodes=50, maxsteps=100, policy=None):
+    """
+    Collects samples from the simulator using the policy by running it
+    at most maxepisodes episodes of each which is at most maxsteps steps long
+    """
+
+    if policy is None:
+        policy = RandomPolicy(1.0, 0.0, Simulator.actions)
+
+    samples = []
+
+    for episode in range(maxepisodes):
+        # reset the simulator
+        sim.reset()
+
+        for step in range(maxsteps):
+            samples.append(sim.execute(policy.select_action(sim.state)[0]))
+            # if this was an absorbing state
+            # then start a new episode
+            if samples[-1].absorb:
+                break
+
+    return samples
+
+def initialize_policy(explore, discount, basis):
+    return Policy(explore, discount, Simulator.actions, basis)
+
+def watch_execution(sim, policy, state=None, maxsteps=500):
+    """
+    Visually displays the grid and the agents movements in the terminal
+    as the agent executes the given policy
+    """
+    absorb = False
+    sim.reset(state)
+
+    totreward = 0.0
+    steps = 0
+    while not absorb and steps < maxsteps:
+        steps += 1
+        
+        os.system('cls' if os.name=='nt' else 'clear')
+        print sim
+
+        stateindex = sim.state_to_index(sim.state)
+        action = policy.select_action(stateindex)[0]
+
+        print "Step: %i State: %s" % (steps, sim.state)
+        print "------------"
+        print "Executing action %s (%i)" % (print_action(action), action)
+        print "Total Reward: %f" % totreward
+        print "Reward per Step: %f" % (totreward/steps)
+        sample = sim.execute(action)
+
+        totreward += sample.reward
+        absorb = sample.absorb
+        sleep(.4)
+
+    print
+
+    if absorb:
+        print Color.green("Agent Reached Goal State %s with reward of %f" % (sim.state, sample.reward))
+    else:
+        print Color.red("Agent did not reach a goal state within %i steps!" % maxsteps)
+
+    print "Total Reward: %f" % totreward
+    print "Reward per Step: %f" % (totreward/steps)
+
+def print_action(action):
+    """
+    Prints the action as a unicode arrow
+    """
+    if action == 0:
+        return u'\u2191'
+    elif action == 1:
+        return u'\u2192'
+    elif action == 2:
+        return u'\u2193'
+    elif action == 3:
+        return u'\u2190'
+    elif action == 4:
+        return u'\u2197'
+    elif action == 5:
+        return u'\u2198'
+    elif action == 6:
+        return u'\u2199'
+    elif action == 7:
+        return u'\u2196'
+    else:
+        return '?'
 
 if __name__ == '__main__':
     import sys
@@ -292,7 +383,24 @@ if __name__ == '__main__':
     path = sys.argv[1]
 
     sim = Simulator(path)
-
-    pdb.set_trace()
+    
+    k = 20
+    maxiter = 200
+    epsilon = 10**(-12)
+    samples = collect_samples(sim)
+    discount = .8
 
     
+    # construct a graph from the samples
+    graph = pvf.construct_graph(samples, Simulator.states)
+
+    basis = pvf.create_basis_function(graph, Simulator.states,
+                                      Simulator.actions, k)
+
+    policy = initialize_policy(0.0, discount, basis)
+
+    final_policy, all_policies = lspi.lspi(maxiter, epsilon,
+                                           samples, policy)
+
+    watch_execution(sim, final_policy, state=(3,4))
+    pdb.set_trace()

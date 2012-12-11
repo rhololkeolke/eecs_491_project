@@ -57,8 +57,8 @@ class Policy(object):
                     besta.append(i)
                     actionphi.append(phi)
 
-            #which = np.random.randint(len(besta))
-            which = 0
+            which = np.random.randint(len(besta))
+            #which = 0
 
             action = besta[which]
             actionphi = actionphi[which]
