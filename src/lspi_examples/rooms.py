@@ -26,6 +26,7 @@ import yaml
 from terminal import Color
 import os
 from time import sleep
+import matplotlib.pyplot as plt
     
 
 class Simulator(BaseSim):
@@ -376,6 +377,46 @@ def print_action(action):
     else:
         return '?'
 
+def display_qvalues(sim, policy, action=None):
+    """
+    Plots the Q values for each state action pair.
+    If no action is specified then the maximum Q-value
+    is shown
+    """
+
+    qvalues = np.zeros((sim.h, sim.w))
+
+    for i in range(sim.states):
+        state = sim.index_to_state(i)
+        if action is None:
+            a = policy.select_action(i)[0]
+            qvalues[state[0], state[1]] = lspi.qvalue(i, a, policy)
+        else:
+            qvalues[state[0], state[1]] = lspi.qvalue(i, action, policy)
+
+    plt.imshow(qvalues, interpolation='none')
+    plt.colorbar()
+
+    plt.title('Q Values')
+
+def display_policy(sim, policy):
+    """
+    Plots the policy as a color map over all the states.
+    """
+    actions = np.zeros((sim.h, sim.w))
+
+    for i in range(sim.states):
+        state = sim.index_to_state(i)
+        actions[state[0], state[1]] = policy.select_action(i)[0]
+
+    plt.imshow(actions, interpolation='none')
+    cbar = plt.colorbar(boundaries=[0,1,2,3,4], values=[0,1,2,3],
+                  ticks=[0,1,2,3], spacing = 'uniform')
+    cbar.ax.set_yticklabels((r'up', r'right', r'down', r'left'))
+    plt.title('Policy Actions')
+    plt.xlabel('State')
+    plt.yticks([])
+
 if __name__ == '__main__':
     import sys
     import pdb
@@ -388,6 +429,7 @@ if __name__ == '__main__':
     maxiter = 200
     epsilon = 10**(-12)
     samples = collect_samples(sim)
+    samples += collect_samples(sim)
     discount = .8
 
     
@@ -402,5 +444,13 @@ if __name__ == '__main__':
     final_policy, all_policies = lspi.lspi(maxiter, epsilon,
                                            samples, policy)
 
-    watch_execution(sim, final_policy, state=(3,4))
+    plt.figure()
+    plt.subplot(1,2,1)
+    display_qvalues(sim, final_policy)
+
+    plt.subplot(1,2,2)
+    display_policy(sim, final_policy)
+    plt.show()
+    
+    watch_execution(sim, final_policy, state=(3,4), maxsteps=30)
     pdb.set_trace()
