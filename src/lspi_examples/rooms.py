@@ -27,6 +27,7 @@ from terminal import Color
 import os
 from time import sleep
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
     
 
 class Simulator(BaseSim):
@@ -168,8 +169,7 @@ class Simulator(BaseSim):
         while self.state is None:
             row = np.random.randint(self.h)
             col = np.random.randint(self.w)
-            if self.grid[row, col] != Simulator.__wall_sym and \
-               self.absorb.get((row, col), None) is None:
+            if self.grid[row, col] != Simulator.__wall_sym:
                 self.state = (row, col)
 
     def __str__(self):
@@ -208,8 +208,7 @@ class Simulator(BaseSim):
         """
 
         if state is not None:
-            if self.grid[state[0], state[1]] != Simulator.__wall_sym and \
-               self.absorb.get(state, None) is None:
+            if self.grid[state[0], state[1]] != Simulator.__wall_sym:
                 self.state = state
                 return
 
@@ -238,41 +237,12 @@ class Simulator(BaseSim):
         index = self.state_to_index(self.state)
         
         if np.random.rand() > self.succprob:
-            # randomly pick an incorrect action
-            selection = int(np.random.rand()*(Simulator.actions-1))
-            if selection >= action:
-                selection += 1
-        else:
-            selection = action
+            # if the action failed remain the same state
+            reward = Simulator.rewards[index, 0] + self.step_cost
+            sample = Sample(index, action, reward, index, False)
+            return sample
 
-        # find the new row
-        if selection in [0, 4, 7]:
-            # moving up
-            newrow = max(0, min(self.h-1, self.state[0]-1))
-        elif selection in [2, 5, 6]:
-            # moving down
-            newrow = max(0, min(self.h-1, self.state[0]+1))
-        else:
-            # not moving up or down
-            newrow = self.state[0]
-
-        # find the new column
-        if selection in [1, 4, 5]:
-            # moving right
-            newcol = max(0, min(self.w-1, self.state[1]+1))
-        elif selection in [3, 6, 7]:
-            # moving left
-            newcol = max(0, min(self.w-1, self.state[1]-1))
-        else:
-            # not moving left or right
-            newcol = self.state[1]
-
-        if self.grid[newrow, newcol] == Simulator.__wall_sym:
-            newrow = self.state[0]
-            newcol = self.state[1]
-            
-        nextstate = (newrow, newcol)
-        nextindex = self.state_to_index(nextstate)
+        nextstate, nextindex = self.get_next_state(self.state, action)
 
         if nextstate in self.absorb:
             absorb = True
@@ -286,6 +256,95 @@ class Simulator(BaseSim):
         self.state = nextstate
 
         return sample
+
+    def get_next_state(self, state, action):
+        # find the new row
+        if action in [0, 4, 7]:
+            # moving up
+            newrow = max(0, min(self.h-1, state[0]-1))
+        elif action in [2, 5, 6]:
+            # moving down
+            newrow = max(0, min(self.h-1, state[0]+1))
+        else:
+            # not moving up or down
+            newrow = state[0]
+
+        # find the new column
+        if action in [1, 4, 5]:
+            # moving right
+            newcol = max(0, min(self.w-1, state[1]+1))
+        elif action in [3, 6, 7]:
+            # moving left
+            newcol = max(0, min(self.w-1, state[1]-1))
+        else:
+            # not moving left or right
+            newcol = state[1]
+
+        if self.grid[newrow, newcol] == Simulator.__wall_sym:
+            newrow = state[0]
+            newcol = state[1]
+            
+        nextstate = (newrow, newcol)
+        nextindex = self.state_to_index(nextstate)
+
+        return nextstate, nextindex
+
+    def get_transition_model(self):
+        """
+        Explicitly calculates the transition model and
+        returns it.
+
+        This is used for calculating the actual Value function
+        without approximations
+        """
+
+        # the transition model
+        T = np.zeros((Simulator.states, Simulator.states, Simulator.actions))
+
+        for index in range(Simulator.states):
+            for a in range(Simulator.actions):
+                state = self.index_to_state(index)
+
+                # if this is a wall state then
+                # nothing can transition out of it
+                if self.grid[state[0], state[1]] == Simulator.__wall_sym \
+                   or self.absorb.get(state, None) is not None:
+                    continue
+
+                nextstate, nextindex = self.get_next_state(state, a)
+
+                # if the agent hasn't moved
+                if nextindex == index:
+                    T[index, index, a] = 1.0
+                else:
+                    T[index, index, a] = 1-self.succprob
+                    T[index, nextindex, a] = self.succprob
+
+        return T
+
+    def get_reward_model(self):
+        """
+        Explicitly calculates the reward model and returns it
+
+        This is used for calculating the actual Reward function
+        without approximations
+        """
+        R = np.tile(self.step_cost, (Simulator.states, Simulator.states))
+
+        # for each absorbing state update the reward function
+        for state in self.absorb:
+            index = self.state_to_index(state)
+
+            R[index, index] = self.absorb[state] + R[index, index]
+            
+            for a in range(Simulator.actions):
+                prevstate, previndex = self.get_next_state(state, a)
+                if previndex != index:
+                    R[previndex, index] = self.absorb[state] + R[previndex, index]
+
+        return R
+
+        
         
 def collect_samples(sim, maxepisodes=50, maxsteps=100, policy=None):
     """
@@ -377,11 +436,16 @@ def print_action(action):
     else:
         return '?'
 
-def display_qvalues(sim, policy, action=None):
+def display_qvalues(sim, policy, action=None, dim=2):
     """
     Plots the Q values for each state action pair.
     If no action is specified then the maximum Q-value
     is shown
+
+    If dim is 2 display as color map
+    If dim is 1 display as line graph
+
+    Returns the qvalues that were used
     """
 
     qvalues = np.zeros((sim.h, sim.w))
@@ -394,10 +458,15 @@ def display_qvalues(sim, policy, action=None):
         else:
             qvalues[state[0], state[1]] = lspi.qvalue(i, action, policy)
 
-    plt.imshow(qvalues, interpolation='none')
-    plt.colorbar()
+    if dim == 2:
+        plt.imshow(qvalues, interpolation='none')
+        plt.colorbar()
+    else:
+        plt.plot(np.arange(Simulator.states), qvalues.ravel())
 
     plt.title('Q Values')
+
+    return qvalues
 
 def display_policy(sim, policy):
     """
@@ -417,6 +486,109 @@ def display_policy(sim, policy):
     plt.xlabel('State')
     plt.yticks([])
 
+def graph_laplacian_basis_functions(sim, graph):
+    """
+    Plots the laplacian basis functions over the states
+    """
+    basis_functions = pvf.get_laplacian_basis_function(graph, sim.states,
+                                                       sim.actions, 5)
+    
+    fig = plt.figure()
+    plt.subplot(2,2,1)
+    plt.imshow(basis_functions[:,0].reshape((sim.h, sim.w)))
+    plt.colorbar()
+
+    plt.subplot(2,2,2)
+    plt.imshow(basis_functions[:,1].reshape((sim.h, sim.w)))
+    plt.colorbar()
+
+    plt.subplot(2,2,3)
+    plt.imshow(basis_functions[:,2].reshape((sim.h, sim.w)))
+    plt.colorbar()
+
+    plt.subplot(2,2,4)
+    plt.imshow(basis_functions[:,3].reshape((sim.h, sim.w)))
+    plt.colorbar()
+
+    plt.show()
+
+def value_iteration(sim, discount=.8, epsilon=10**-5, maxiter=500):
+    """
+    Using the information stored in the simulator instance
+    this method solves the bellman equation
+
+    The purpose of this method is to tell how close the
+    values of the approximated function match the actual
+    value function
+
+    This returns a 2d numpy array with the same dimensions
+    as the simulators grid
+    """
+    
+    Vold = np.zeros((sim.h*sim.w, 1))
+    Vnew = np.zeros((sim.h*sim.w, 1))
+
+    # compute P(s,s')
+    P = sim.get_transition_model()
+
+    # compute R(s, s')
+    R = sim.get_reward_model()
+
+    distance = float('inf')
+    iteration = 0
+
+    #pdb.set_trace()
+
+    while distance > epsilon and iteration < maxiter:
+        iteration += 1
+        Vnew = Vold.copy()
+        for s in range(Simulator.states):
+            # value functions for each of the
+            # possible actions
+            Vcand = []
+            for a in range(Simulator.actions):
+                Va = 0.0
+
+                # generate possible sprimes
+                sprimes = [s]
+                sprimes.append(sim.get_next_state(sim.index_to_state(s), a)[1])
+
+                # remove duplicates
+                sprimes = list(set(sprimes))
+                
+                for sprime in sprimes:
+                    Va += P[s, sprime, a]*(R[s, sprime] + discount*Vold[sprime, 0])
+                Vcand.append(Va)
+
+            Vnew[s, 0] = max(Vcand)
+
+        distance = np.linalg.norm(Vnew-Vold)
+        Vold = Vnew
+
+    return Vnew
+
+def display_value_function(sim, discount=.8, epsilon=10**-5, maxiter=500, dim=2):
+    """
+    Displays the optimal value function.
+
+    If dim is 2 then it is displayed as colormap
+    If dim is 1 then it is displayed as a line graph
+
+    Returns the Value function used
+    """
+
+    V = value_iteration(sim, discount, epsilon, maxiter)
+
+    if dim == 2:
+        plt.imshow(V.reshape((sim.h, sim.w)).T, interpolation='none')
+        plt.colorbar()
+    else:
+        plt.plot(np.arange(Simulator.states), V)
+
+    plt.title('Value Function')
+        
+    return V
+
 if __name__ == '__main__':
     import sys
     import pdb
@@ -425,11 +597,12 @@ if __name__ == '__main__':
 
     sim = Simulator(path)
     
-    k = 20
+    k = 21
     maxiter = 200
     epsilon = 10**(-12)
     samples = collect_samples(sim)
-    samples += collect_samples(sim)
+    while len(samples) < 5000:
+        samples += collect_samples(sim)
     discount = .8
 
     
@@ -441,16 +614,23 @@ if __name__ == '__main__':
 
     policy = initialize_policy(0.0, discount, basis)
 
-    final_policy, all_policies = lspi.lspi(maxiter, epsilon,
-                                           samples, policy)
+    #final_policy, all_policies = lspi.lspi(maxiter, epsilon,
+    #                                       samples, policy)
+
+    #plt.figure()
+    #plt.subplot(1,2,1)
+    #display_qvalues(sim, final_policy)
+
+    #plt.subplot(1,2,2)
+    #display_policy(sim, final_policy)
+    #plt.show()
+    
+    #watch_execution(sim, final_policy, state=(3,6), maxsteps=20)
 
     plt.figure()
     plt.subplot(1,2,1)
-    display_qvalues(sim, final_policy)
-
+    display_value_function(sim)
     plt.subplot(1,2,2)
-    display_policy(sim, final_policy)
+    display_value_function(sim, dim=1)
     plt.show()
-    
-    watch_execution(sim, final_policy, state=(3,4), maxsteps=30)
     pdb.set_trace()

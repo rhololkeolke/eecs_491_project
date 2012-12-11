@@ -65,3 +65,18 @@ def create_basis_function(graph, S, A, k):
         return phi
 
     return basis
+
+def get_laplacian_basis_function(graph, S, A, k):
+    """
+    This method gets the laplacian basis functions
+    by taking the k smoothest eigen vectors
+    of the combinatorial laplacian
+    """
+
+    laplacian = graph.normalisedLaplacianSym()
+
+    eigen_vals, eigen_vecs = eigsh(laplacian,
+                                   k=k,
+                                   which='SM')
+
+    return eigen_vecs
