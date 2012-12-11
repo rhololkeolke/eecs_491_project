@@ -307,8 +307,10 @@ class Simulator(BaseSim):
 
                 # if this is a wall state then
                 # nothing can transition out of it
-                if self.grid[state[0], state[1]] == Simulator.__wall_sym \
-                   or self.absorb.get(state, None) is not None:
+                if self.grid[state[0], state[1]] == Simulator.__wall_sym:
+                    continue
+                elif self.absorb.get(state, None) is not None:
+                    #T[index, index, a] = 1.0
                     continue
 
                 nextstate, nextindex = self.get_next_state(state, a)
@@ -614,23 +616,26 @@ if __name__ == '__main__':
 
     policy = initialize_policy(0.0, discount, basis)
 
-    #final_policy, all_policies = lspi.lspi(maxiter, epsilon,
-    #                                       samples, policy)
-
-    #plt.figure()
-    #plt.subplot(1,2,1)
-    #display_qvalues(sim, final_policy)
-
-    #plt.subplot(1,2,2)
-    #display_policy(sim, final_policy)
-    #plt.show()
-    
-    #watch_execution(sim, final_policy, state=(3,6), maxsteps=20)
+    final_policy, all_policies = lspi.lspi(maxiter, epsilon,
+                                           samples, policy)
 
     plt.figure()
-    plt.subplot(1,2,1)
+    plt.subplot(2,2,1)
+    display_qvalues(sim, final_policy)
+    plt.title('Estimated Value Function')
+    plt.subplot(2,2,2)
+    display_qvalues(sim, final_policy, dim=1)
+    plt.title('Estimated Value Function')
+
+    #lt.subplot(1,2,2)
+    #isplay_policy(sim, final_policy)
+    #lt.show()
+
+    plt.subplot(2,2,3)
     display_value_function(sim)
-    plt.subplot(1,2,2)
+    plt.subplot(2,2,4)
     display_value_function(sim, dim=1)
     plt.show()
-    pdb.set_trace()
+    
+    watch_execution(sim, final_policy, maxsteps=20)
+
