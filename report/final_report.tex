@@ -198,12 +198,66 @@ experimented with in this project.
 
 \section{Experimental Results}
 
+In this section the experiments that were performed are
+summarized. The experiments took place in a grid environment. In the
+environment there was a single Agent. Throughout the grid spaces goals
+and traps were distributed. If an agent stepped on a goal or trap the
+episode would end and the agent would get either a positive reward for
+a goal or a negative reward for a trap.
+
+The world also had the option of penalizing the agent for each step it
+took. Actions could also be probabilistic. If an action succeeded the
+agent would move in the direction specified, if an action failed the
+agent would remain in the same state. The world had the option to use
+either 4 actions (the cardinal directions) or 8 actions (the cardinal
+directions plus diagonals).
+
+To make comparison between the different maps easier the following
+properties were used for the maps discussed in this section. The
+set of 4 actions was used and the probability of each action's success
+was 90\%. A discount factor of .8 was used. Goals had a reward of 100
+and traps had a reward of -100. The step cost for the agent was 0.
+
+The main maps investigated were the following
+
+\FloatBarrier
+\begin{figure}[h!]
+\centering
+\includegraphics[scale=.5]{images/10x102room.png}
+\caption{Simple 10x10 2 Room Map}
+\label{10x102roomMap}
+\end{figure}
+\FloatBarrier
+
+\FloatBarrier
+\begin{figure}[h!]
+\centering
+\includegraphics[scale=.5]{images/15x152room.png}
+\caption{Simple 15x15 2 Room Map}
+\label{15x152roomMap}
+\end{figure}
+\FloatBarrier
+
+\FloatBarrier
+\begin{figure}[h!]
+\centering
+\includegraphics[scale=.5]{images/maze01_world.png}
+\caption{Auto-generated 10x10 Maze}
+\label{10x102roomMap}
+\end{figure}
+\FloatBarrier
+
+These screenshots are from one of the programs developed. Goal states
+are represented by green G's, traps are represented by red G's, the
+agent is represented by a yellow A, walls are represented by red *'s and
+white -'s represent empty states.
+
 \subsection*{Comparison of Value Function to Approximation}
 
 \FloatBarrier
 \begin{figure}[h!]
 \centering
-
+\includegraphics[scale=.5]{images/paper_example_V_function_comparison_k25_s5000_graph01.png}
 \caption{Comparison of Actual Value Function vs Approximated Value
   Function for Simple 10x10 2 Room problem and 25 PVF}
 \label{valueVsQ1}
@@ -220,15 +274,31 @@ experimented with in this project.
 \end{figure}
 \FloatBarrier
 
+Looking at figures \ref{valueVsQ1} and \ref{valueVsQ2} the shape of
+the the Value function is clearly seen the approximated value
+function. Especially in the areas close to the goal state. However,
+the magnitudes don't quite match the actual magnitudes and the shapes
+are not perfect. On the other hand as seen in the colormap, while the
+absolute values may not exactly match the value function the relative
+values between states seem to line up.
+
 \FloatBarrier
 \begin{figure}[h!]
 \centering
-
+\includegraphics[scale=.5]{images/maze01_V_comparison_k50_s5000.png}
 \caption{Comparison of Actual Value Function vs Approximated Value
-  Function for Simple 10x10 2 Auto-generated maze problem and 50 PVF}
+  Function for 10x10 Auto-generated maze problem and 50 PVF}
 \label{valueVsQ3}
 \end{figure}
 \FloatBarrier
+
+Looking at figure~\ref{valueVsQ3} a correlation between the
+approximated value and the actual value can be seen on the
+colormap. But from the one dimensional representation there are many
+discrepancies. Likely these discrepancies could be reduced by
+increasing both the number of samples used when constructing the basis
+functions and weights, as well as by increasing the number of basis
+functions used.
 
 \subsection*{Policy Comparison}
 
@@ -241,6 +311,7 @@ grid. The color key is shown next to the graph.
 \FloatBarrier
 \begin{figure}[h!]
 \centering
+\includegraphics[scale=.5]{images/paper_example_policy_comparison_k25_s5000_graph01.png}
 \caption{Comparison of Actual Value Function vs Approximated Value
   Function for Simple 10x10 2 Room problem and 25 PVF}
 \label{valueVsQ1}
@@ -250,6 +321,7 @@ grid. The color key is shown next to the graph.
 \FloatBarrier
 \begin{figure}[h!]
 \centering
+\includegraphics[scale=.5]{images/paper_example_big_policy_comparison_k75_graph01.png}
 \caption{Comparison of Actual Value Function vs Approximated Value
   Function for Simple 15x15 2 Room problem and 75 PVF}
 \label{valueVsQ2}
@@ -259,6 +331,7 @@ grid. The color key is shown next to the graph.
 \FloatBarrier
 \begin{figure}[h!]
 \centering
+\includegraphics[scale=.5]{images/maze01_policy_comparison_k50_s5000.png}
 \caption{Comparison of Actual Value Function vs Approximated Value
   Function for Simple 10x10 2 Auto-generated maze problem and 50 PVF}
 \label{valueVsQ3}
@@ -289,8 +362,9 @@ sections of inoptimal policies can create issues.
 \FloatBarrier
 \begin{figure}[h!]
 \centering
+\includegraphics[scale=.5]{images/paper_example_big_laplacian_graph.png}
 \caption{Top 4 Smoothest Normalized Laplacian Basis Functions for
-  10x10 2 Room Problem}
+  15x15 2 Room Problem}
 \label{laplacianBasis1}
 \end{figure}
 \FloatBarrier
@@ -298,6 +372,7 @@ sections of inoptimal policies can create issues.
 \FloatBarrier
 \begin{figure}[h!]
 \centering
+\includegraphics[scale=.5]{images/paper_example_multiroom_laplacian_graph.png}
 \caption{Top 4 Smoothest Normalized Laplacian Basis Functions for
   10x10 3 Room Problem}
 \label{laplacianBasis2}
@@ -307,6 +382,7 @@ sections of inoptimal policies can create issues.
 \FloatBarrier
 \begin{figure}[h!]
 \centering
+\includegraphics[scale=.5]{images/maze01_laplacian_graph.png}
 \caption{Top 4 Smoothest Normalized Laplacian Basis Functions for
   10x10 Auto-generated maze Problem}
 \label{laplacianBasis3}
@@ -330,6 +406,7 @@ graph is shown in Fig~\ref{Qconvergence1}
 \FloatBarrier
 \begin{figure}[h!]
 \centering
+\includegraphics[scale=.5]{images/debugging1.png}
 \caption{Approximate Q Value over LSPI Iterations with 25 PVF for
   10x10 2 Room Problem}
 \label{Qconvergence1}
@@ -413,11 +490,13 @@ problems in a similar domain.
 Using this metric a number of room problems were evaluated with both
 value iteration and the the RPI algorithm. The number of PVF's was
 determined by when the average steps per episode leveled off. An
-example graph is shown in Fig~\ref{performanceComparisonGraph1}
+example graph is shown in Fig~\ref{performanceComparisonGraph1}. In this
+case that happened at around 40 episodes of sampling.
 
 \FloatBarrier
 \begin{figure}[h!]
 \centering
+\includegraphics[scale=.5]{images/paper_example_big_comparison_graph02.png}
 \caption{Performance Comparison Graph between different PVF's for the
   15x15 2 Room Example}
 \label{performanceComparisonGraph1}
