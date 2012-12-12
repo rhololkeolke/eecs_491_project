@@ -1,13 +1,16 @@
-\documentclass[10pt, letterpaper, final]{report}
+\documentclass[12pt, letterpaper, final]{report}
 \usepackage{hyperref}
 \usepackage{ctable}
 \usepackage{graphicx}
 \usepackage{amssymb}
+\usepackage{amsmath}
 \usepackage[section]{placeins}
 
 \author{Devin Schwab (dts34)}
-\title{EECS 491 Final Project Report\\
-Learning Basis Functions\\
+\title{EECS 491 Final Project Report \\ 
+\vspace{5 mm}
+Learning Basis Functions\\ 
+\vspace{5 mm}
  An Evaluation of Protovalue Functions\\
  and the\\
  Representation Policy Iteration Algorithm}
@@ -20,7 +23,342 @@ Learning Basis Functions\\
 
 \tableofcontents
 \newpage
+\listoffigures
 
 \section{Abstract}
+
+\section{Background}
+
+\subsection*{MDP}
+
+\subsection*{Value Iteration and Q-Learning}
+
+\subsection*{LSPI}
+
+\subsection*{Q-function Approximation}
+
+\subsection*{Learning Basis Functions}
+
+\subsection*{Representation Policy Iteration (RPI)}
+
+\subsection*{Bayesian Reinforcement Learning}
+
+\subsection*{Bayesian Exploration}
+
+\subsection*{Bayesian Exploration with RPI}
+
+\section{Experimental Results}
+
+\subsection*{Comparison of Value Function to Approximation}
+
+\FloatBarrier
+\begin{figure}[h!]
+\centering
+\caption{Comparison of Actual Value Function vs Approximated Value
+  Function for Simple 10x10 2 Room problem and 25 PVF}
+\label{valueVsQ1}
+\end{figure}
+\FloatBarrier
+
+\FloatBarrier
+\begin{figure}[h!]
+\centering
+\caption{Comparison of Actual Value Function vs Approximated Value
+  Function for Simple 15x15 2 Room problem and 75 PVF}
+\label{valueVsQ2}
+\end{figure}
+\FloatBarrier
+
+\FloatBarrier
+\begin{figure}[h!]
+\centering
+\caption{Comparison of Actual Value Function vs Approximated Value
+  Function for Simple 10x10 2 Auto-generated maze problem and 50 PVF}
+\label{valueVsQ3}
+\end{figure}
+\FloatBarrier
+
+\subsection*{Policy Comparison}
+
+While the shape and magnitude of the value function is a very good
+approximation the policies vary alot. Graphs of the policy for an
+approximated solution are shown next to graphs of the policies for the
+actual optimal policy for various numbers of basis functions. The graphs show colors for each state in the
+grid. The color key is shown next to the graph.
+
+\FloatBarrier
+\begin{figure}[h!]
+\centering
+\caption{Comparison of Actual Value Function vs Approximated Value
+  Function for Simple 10x10 2 Room problem and 25 PVF}
+\label{valueVsQ1}
+\end{figure}
+\FloatBarrier
+
+\FloatBarrier
+\begin{figure}[h!]
+\centering
+\caption{Comparison of Actual Value Function vs Approximated Value
+  Function for Simple 15x15 2 Room problem and 75 PVF}
+\label{valueVsQ2}
+\end{figure}
+\FloatBarrier
+
+\FloatBarrier
+\begin{figure}[h!]
+\centering
+\caption{Comparison of Actual Value Function vs Approximated Value
+  Function for Simple 10x10 2 Auto-generated maze problem and 50 PVF}
+\label{valueVsQ3}
+\end{figure}
+\FloatBarrier
+
+Its clear that the policies differ in a lot of places. But does this
+mean that the policies are useless? In the experiments run these
+policies were generally as good as the value function policy. There
+are two possible reasons for this.
+
+The first reason is that there are multiple optimal policies. This
+is definitely true for the problems examined. For the room problem
+domain, so long as the number of
+steps taken from the starting position to the goal are the same in two
+different policies, those policies are equal in value.
+
+The second reason is that the inoptimality of the approximation is
+local. If that local inoptimality is not encountered very often then
+on average the approximated policy will appear equal to the optimal
+policy.
+
+However, as discussed later in the problems section these local
+sections of inoptimal policies can create issues.
+
+\subsection*{Examination of Laplacian Basis Functions}
+
+\FloatBarrier
+\begin{figure}[h!]
+\centering
+\caption{Top 4 Smoothest Normalized Laplacian Basis Functions for
+  10x10 2 Room Problem}
+\label{laplacianBasis1}
+\end{figure}
+\FloatBarrier
+
+\FloatBarrier
+\begin{figure}[h!]
+\centering
+\caption{Top 4 Smoothest Normalized Laplacian Basis Functions for
+  10x10 3 Room Problem}
+\label{laplacianBasis2}
+\end{figure}
+\FloatBarrier
+
+\FloatBarrier
+\begin{figure}[h!]
+\centering
+\caption{Top 4 Smoothest Normalized Laplacian Basis Functions for
+  10x10 Auto-generated maze Problem}
+\label{laplacianBasis3}
+\end{figure}
+\FloatBarrier
+
+\subsection*{Convergence Rate}
+
+
+The properties of RPI's convergence is still an area that needs to
+researched. For this reason I examined the convergence rate for the
+rooms problem domain. In all of these experiments
+LSPI was set to run till the $|w_{i}-w_{i-1}| \le 10^-5$.
+
+However, it is interesting to examine the convergence rate of the
+Q-value approximation to the final value. To examine this the LSPI was
+run on the simple 10x10 2 Room problem. The Q-value approximation was
+plotted as a 2D color map for 4 different intermediate policy. This
+graph is shown in Fig~\ref{Qconvergence1}
+
+\FloatBarrier
+\begin{figure}[h!]
+\centering
+\caption{Approximate Q Value over LSPI Iterations with 25 PVF for
+  10x10 2 Room Problem}
+\label{Qconvergence1}
+\end{figure}
+\FloatBarrier
+
+This particular problem converged fairly quickly. The first initial
+policy approximation is the only one that is clearly different. The
+number of iterations of LSPI that were performed on various problems
+was recorded. For each of these problems the world consisted of a
+10x10 grid which a number of walls and a single goal worth +100. The
+step cost was zero and the actions were up, down, left and right. The
+probability of success for each action was .9 and if the action failed
+the agent would remain in the same state. Once the goal was reached
+the episode was ended and a new one was started.
+
+Using a random policy approximately 5000 samples were collected for
+each environment. the RPI algorithm was then run on these samples. In
+each of these problems the number of protovalue functions used was 25,
+50 and 75. On
+average the number of iterations of LSPI until convergence was 9.7
+
+The time to actually compute these representations obviously varies
+based on the number of samples, the size of the world, the number of
+actions and the number of basis functions. However, the number of
+iterations of LSPI that needed to be performed using the basis
+functions were quite few. 
+
+
+\subsection*{Value Function Approximation Efficiency}
+
+To determine how well the RPI framework functions it is important to
+have a good understanding of the algorithms efficiency. Efficiency can
+mean multiple things, but for this section when I refer to efficiency
+I am referring to the following quantity
+
+\[
+\eta = \frac{\text{Space Savings}}{\text{Value Function Error}}
+\]
+
+The reason this metric is used is because both space savings and the
+deviation from the actual value play a large role. For any algorithm
+that attempts to calculate the value function, the algorithm is only
+useful if the space savings don't cause a large increase in error. 
+
+The bottom term will always remain the same as the value function
+error is simply
+
+\[
+| V^{*} - \hat{V}^{*}|
+\]
+
+The top term, however, depends on the algorithm this method is being
+compared to. For instance the space necessary to store all of the
+values for Q-learning explicitly is $|S| \times |A|$ for the reward
+function, R(s,a), and $|S|^2$ for the Q function, Q(s,a). Where $|S|$ is
+the cardinality of the set of states and $|A|$ is the cardinality of
+the set of actions.
+
+On the other hand the storage space of the RPI framework algorithm is 
+$k|S|+k$ where k is the number of basis functions and $|S|$ is the
+cardinality of the set of states.
+
+Therefore for this project the efficiency metric is
+
+\[
+\eta = \frac{(|S|^2 + |S||A|) - (k|A| + k)}{|V^{*} - \hat{V}^{*}|}
+\]
+
+With this metric if the value function error remains constant as the
+space savings increase the efficiency metric will increase and vice
+versa. Likewise if the space savings remain constant but the value
+function error increases then the efficiency will decrease. 
+
+It is
+important to note that while this quantity is called efficiency it is
+not a percentage like in the traditional sense. Also this metric will
+vary from problem to problem. But it is still useful for comparing
+problems in a similar domain.
+
+Using this metric a number of room problems were evaluated with both
+value iteration and the the RPI algorithm. The number of PVF's was
+determined by when the average steps per episode leveled off. An
+example graph is shown in Fig~\ref{performanceComparisonGraph1}
+
+\FloatBarrier
+\begin{figure}[h!]
+\centering
+\caption{Performance Comparison Graph between different PVF's for the
+  15x15 2 Room Example}
+\label{performanceComparisonGraph1}
+\end{figure}
+\FloatBarrier
+
+The efficiency metrics for each of the PVFs are as follows
+
+\FloatBarrier
+\begin{table}[h!]
+  \begin{tabular}{|l|l|l|l|}
+  \hline
+  {\bf k} & {\bf Space Savings} & {\bf Value Function Error} & $\eta$\\ \hline
+  25 & 45875 & 231.19 & 198.43 \\ \hline
+  50 & 40225 & 262  & 153.53 \\ \hline
+  75 & 34575 &  276.8 & 124.89 \\ \hline
+\end{tabular}
+\end{table}
+\FloatBarrier
+
+As can be seen in the table for this particular experiment 25 basis
+functions is the most efficient in terms of reproducing the actual
+Value function. As the number of PVF's increased the efficiency
+decreased. This is due both to the space savings decreasing as well as
+the value function error increasing.
+
+\subsection*{Problems}
+
+While the experiments performed using the RPI framework indicate that
+the algorithm does work in general there are a number of problems with
+it.
+
+For one the quality of the approximated value function is greatly
+affected by the area of the state space that is sampled. If there are
+areas of the state space that aren't often visited and if these areas
+are missed in the sampling step then the basis functions will be based
+off an incorrect interpretation of the state space. As seen in the
+laplacian basis functions section the basis functions are strongly
+correlated to the spatial properties of the state space. This means
+that any missed states can possibly drastically change the
+approximated value function.
+
+The solution to this is to sample uniformly over the state space and
+to collect a large enough group of samples that with reasonable
+confidence one can assume no states were missed.
+
+Another problem is that as shown while the algorithm will converge
+relatively quickly the approximation of the value function can be
+quite inaccurate. This leads to discrepancies in the policies. As seen
+in the policies comparison function while the Value function
+approximation may look very similar to the actual Value function the
+small discrepancies can lead to widly different policies (although not
+necessarily incorrect ones). 
+
+During the experimentation there were
+instances when the agent would get stuck in a particular state or in a
+loop of states. In general increasing the samples and the number of
+basis functions solved these problems. However, it does point out that
+whil the approximation of the value function is good, it is not
+perfect. And while the policy from the approximated value function may
+work for the majority of the states there are still cases where the
+policy can fail.
+
+\section{Future Work}
+
+Now that the protovalue basis functions and the RPI have been closely
+examined and understood the theory of Bayesian RL can be applied on
+top of it. As previously discussed Bayesian RL can be used to solve
+the exploration vs exploitation problem. Instead of using Bayesian RL
+with Q-learning, the Bayesian RL techniques could be applied to the
+RPI framework. This would hopefully allow the learned representations
+to be generalized to similar problems in a domain. 
+
+The Bayesian RL could also be used to provide insight into which parts
+of a new problem's state space should be sampled first. This would
+theoretically reduce the number of samples needed. As the basis
+functions and policies would simply need to be repaired when a new
+problem from the same domain was encountered.
+
+\section{Conclusion}
+
+Based on the experiments conducted for this project it is clear that
+the RPI framework provides real value to the field of reinforcement
+learning. Not only does it allow an agent to learn appropriate basis
+functions it also drastically cuts down on the amount of information
+that must be stored.
+
+While the results can vary based on the state space and actions in
+general the algorithm seems to function well while simultaneously
+providing tremendous space savings.
+
+\section{References}
+
+\section{Appendix A - Experiment Programs}
 
 \end{document}
