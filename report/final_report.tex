@@ -34,7 +34,7 @@ that it is indeed a useful algorithm and that while in some cases it may require
 large number of samples to properly converge, when it does converge
 the space savings are quite large. All of this experimentation was
 done with the intention of understanding the RPI framework so that it
-could be used with in conjunction with Bayesian Reinforcement Learning.
+could be used in conjunction with Bayesian Reinforcement Learning.
 
 \tableofcontents
 \newpage
@@ -53,7 +53,7 @@ future.
 An MDP is specified by the tuple $(S, A, P_a(s,s'), R_a(s,s'))$ where
 S is the set of states in the environment, A is the set of actions the
 agent can perform, $P_a(s,s')$ is the transition model and $R_a(s,s')$
-specifies the reward model.
+specifies the reward model. \cite{soumya_ray_eecs_2012} \cite{richard_s._sutton_reinforcement_2005}
 
 MDP's have been a major topic of study for a number of years and so a
 number of techniques for solving them have been developed. These
@@ -71,7 +71,7 @@ V^{\pi*}(s'))
 \]
 
 where $V^{\pi*}$ is the optimal value function and $\gamma$ is the
-discount factor. All techniques are trying to solve this criterion
+discount factor. \cite{soumya_ray_eecs_2012} \cite{richard_s._sutton_reinforcement_2005} All techniques are trying to solve this criterion
 because it is necessary and sufficient for optimality.
 
 The subject
@@ -82,45 +82,51 @@ it could be incorporated into the Bayesian RL framework.
 \subsection*{Q-function Approximation}
 
 In general when using Q-learning or value iteration one generally runs
-into the ``curse of dimensionality'' for any reasonable real world
+into the ``curse of dimensionality'' for any real world
 problem. For this reason instead of explicitly tracking $Q^*(s,a)$ for all
-states and actions $Q*(s,a)$ is approximated. Often the approximation
+states and actions $Q^*(s,a)$ is approximated. Often the approximation
 is done by hand using heuristics from expert knowledge.
 
 For instance considering the RTS scenario used in the second
 programming assignment of this class, that is two armies fighting each
-other, some basis functions may be distance to closest enemy, health
+other, some of the basis functions may be: distance to closest enemy, health
 of current unit, and health of enemy unit. All of these properties are
-computed based on current or previous information.
+computed based on current or previous information. And all of these
+values were picked based on human knowledge of RTS games.
 
 The Q function can then be approximated by weighting each function and
 combining them linearly using the following equation
+\cite{soumya_ray_eecs_2012} \cite{richard_s._sutton_reinforcement_2005}
 
 \[
 Q^*(s,a) \approx \hat{Q}^*(s,a) = \Sigma_j \phi_j(s,a)w_j^*
 \]
 
 Obviously it would be ideal if these basis functions could be
-automatically determined. As in order to come up with good basis
+automatically determined. Also in order to come up with good basis
 functions one must already have knowledge about the problem domain
-that the reinforcement learning agent is trying to solve. The RPI
-framework provides a solution to the problem of automatically creating
+that the reinforcement learning agent is trying to solve. This is a
+type of chicken and egg problem. The RPI
+framework provides a solution to the problem by automatically creating
 a set of basis functions for the domain.
 
 One thing to note about the basis function approximation is that it
- can have limited success as the mapping of
-the solution onto the basis functions may break the Bellman backup
-operator. That is the mapping may no longer be a contraction mapping
-and so when using basis functions as an approximation the
+ can have limited success. The mapping of
+the solution onto the basis functions may break the convergence property Bellman backup
+operator. In other words, the mapping may no longer be a contraction
+mapping. So when using basis functions as an approximation the
 reinforcement learning algorithms are no longer guaranteed to converge.
 
 \subsection*{Learning Basis Functions}
 
-The RPI framework utilizes previous work done by Mahadevan {\bf
-  CITATION} on Proto-Value Functions (PVFs). Protovalue functions utilize a
+The RPI framework utilizes previous work done by
+Mahadevan\cite{sridhar_mahadevan_proto-value_????} \cite{sridhar_mahadevan_representation_????} on Proto-Value Functions (PVFs). Protovalue functions utilize a
 lot of the ideas discussed in the field of principle component
 analysis. At their basic level proto-value functions are set of
-eigenvectors on the representation of some problem's state space.
+eigenvectors on the representation of some problem's state space. The
+goal of PVFs is to accurately represent the problem space while
+avoiding the curse of dimensionality. PVFs do this by keeping track of
+only the most important features of a problem space.
 
 The PVFs take advantage of the graph operator known as the normalized
 graph Laplacian (however, other operators can be
@@ -131,7 +137,7 @@ matrix.
 
 By constructing a graph of the state space from a set of
 samples, information about the structure of the state space is
-represented. The graph laplacian is an operator performed on that
+represented. The graph laplacian is an operator performed on a
 graph that transforms the graph representation into a special matrix
 form. This matrix form can be used with eigen vectors and eigen values
 to do a form of principal component analysis on the graph. A subset of
@@ -140,7 +146,7 @@ these eigen vectors can then be chosen and used as the basis functions.
 The eigen vectors of the graph Laplacian form good basis functions for
 2 main reasons. The first is that they are orthogonal meaning that
 there is no redundancy when the actual value is approximated by being
-projected onto these basis functions. Secondly the graph Laplacian
+projected onto these basis functions. Secondly, the graph Laplacian
 encodes structural information about the space and the eigen vectors
 capture key parts of that information.
 
@@ -148,7 +154,7 @@ capture key parts of that information.
 
 Least-Squares Policy Iteration (LSPI) is a technique for solving an
 MDP by approximating the value function using a set of basis functions
-or features. LSPI is an offline algorithm. It converges to a policy
+or features. \cite{lagoudakis_least-squares_2004} LSPI is an offline algorithm. It converges to a policy
 based on a set of sample tuples.
 
 Each sample tuple is of the following form
@@ -173,10 +179,10 @@ $|S||A| \times k$ matrix where $|S|$ is the cardinality of the set of
 states and $|A|$ is the cardinality of the set of actions. Each row of
 $\Phi$ contains the values of all of the basis functions for a single
 (s,a) and each column contains the values of a single basis function
-for all (s,a).
+for all (s,a). \cite{lagoudakis_least-squares_2004}
 
 The paper that introduces LSPI derives an explict formula that can be
-used to solve for the weights. {\bf citation} The formula is the
+used to solve for the weights. \cite{lagoudakis_least-squares_2004} The formula is the
 following
 
 \[ Aw^* = b\]
@@ -190,7 +196,7 @@ than $\epsilon$ or the maximum number of iterations is reached.
 
 Representation Policy Iteration (RPI) combines the use of PVFs with
 the LSPI algorithm to create an offline algorithm that can
-approximately solve an MDP.
+approximately solve an MDP. \cite{sridhar_mahadevan_representation_????}
 
 The basic process is to sample the state space, then construct the
 PVFs then run the LSPI algorithm. The RPI framework is what was
@@ -275,7 +281,7 @@ white -'s represent empty states.
 \FloatBarrier
 
 Looking at figures \ref{valueVsQ1} and \ref{valueVsQ2} the shape of
-the the Value function is clearly seen the approximated value
+the the Value function is clearly seen in the approximated value
 function. Especially in the areas close to the goal state. However,
 the magnitudes don't quite match the actual magnitudes and the shapes
 are not perfect. On the other hand as seen in the colormap, while the
@@ -314,7 +320,7 @@ grid. The color key is shown next to the graph.
 \includegraphics[scale=.5]{images/paper_example_policy_comparison_k25_s5000_graph01.png}
 \caption{Comparison of Actual Value Function vs Approximated Value
   Function for Simple 10x10 2 Room problem and 25 PVF}
-\label{valueVsQ1}
+\label{policy1}
 \end{figure}
 \FloatBarrier
 
@@ -324,7 +330,7 @@ grid. The color key is shown next to the graph.
 \includegraphics[scale=.5]{images/paper_example_big_policy_comparison_k75_graph01.png}
 \caption{Comparison of Actual Value Function vs Approximated Value
   Function for Simple 15x15 2 Room problem and 75 PVF}
-\label{valueVsQ2}
+\label{policy2}
 \end{figure}
 \FloatBarrier
 
@@ -334,7 +340,7 @@ grid. The color key is shown next to the graph.
 \includegraphics[scale=.5]{images/maze01_policy_comparison_k50_s5000.png}
 \caption{Comparison of Actual Value Function vs Approximated Value
   Function for Simple 10x10 2 Auto-generated maze problem and 50 PVF}
-\label{valueVsQ3}
+\label{policy3}
 \end{figure}
 \FloatBarrier
 
@@ -354,7 +360,7 @@ local. If that local inoptimality is not encountered very often then
 on average the approximated policy will appear equal to the optimal
 policy.
 
-However, as discussed later in the problems section these local
+However, as discussed later in the problems section, these local
 sections of inoptimal policies can create issues.
 
 \subsection*{Examination of Laplacian Basis Functions}
@@ -389,18 +395,40 @@ sections of inoptimal policies can create issues.
 \end{figure}
 \FloatBarrier
 
+The top 3 smoothest normalized Laplacian basis functions for 3
+different maps are shown in figures \ref{laplacianBasis1},
+\ref{laplacianBasis2}, and \ref{laplacianBasis3}. Examining each of
+them the underlying structure of the map can clearly be seen. Looking
+at only the top left graph of each figure a clear delineation between
+walls and empty spaces can be made. 
+
+The top right graph in each figure
+highlights the section of the state space that is ideal because of its
+proximity to the goal as well as the section of the state space that
+is least ideal because of its distance from the goal. These two
+sections differ in sign so when the weights attempt to converge
+theoretically the section close to the goal will be multiplied by a
+weight that makes the value large and positive and the other section
+will be multiplied by the same weight. However, due to the sign
+difference between the two sections the value will come out large and
+negative. This information alone highlights the good and bad sections
+to the agent.
+
+The other two graphs do similar things to the first two. By combining
+these functions with weights an approximate value function can be created.
+
 \subsection*{Convergence Rate}
 
 
 The properties of RPI's convergence is still an area that needs to
-researched. For this reason I examined the convergence rate for the
+researched. \cite{sridhar_mahadevan_representation_????} For this reason I examined the convergence rate for the
 rooms problem domain. In all of these experiments
-LSPI was set to run till the $|w_{i}-w_{i-1}| \le 10^-5$.
+LSPI was set to run till the $|w_{i}-w_{i-1}| \le 10^{-5}$.
 
-However, it is interesting to examine the convergence rate of the
+It is interesting to examine the convergence rate of the
 Q-value approximation to the final value. To examine this the LSPI was
 run on the simple 10x10 2 Room problem. The Q-value approximation was
-plotted as a 2D color map for 4 different intermediate policy. This
+plotted as a 2D color map for 4 different intermediate policies. This
 graph is shown in Fig~\ref{Qconvergence1}
 
 \FloatBarrier
@@ -426,8 +454,8 @@ the episode was ended and a new one was started.
 Using a random policy approximately 5000 samples were collected for
 each environment. the RPI algorithm was then run on these samples. In
 each of these problems the number of protovalue functions used was 25,
-50 and 75. On
-average the number of iterations of LSPI until convergence was 9.7
+50 and 75. The maximum number of iterations allowed was 20. On
+average the number of iterations of LSPI until convergence was 12.7
 
 The time to actually compute these representations obviously varies
 based on the number of samples, the size of the world, the number of
@@ -440,14 +468,16 @@ functions were quite few.
 
 To determine how well the RPI framework functions it is important to
 have a good understanding of the algorithms efficiency. Efficiency can
-mean multiple things, but for this section when I refer to efficiency
-I am referring to the following quantity
+mean multiple things, but for this section when efficiency is
+mentioned it is meant to be the following quantity
 
 \[
 \eta = \frac{\text{Space Savings}}{\text{Value Function Error}}
 \]
 
-The reason this metric is used is because both space savings and the
+This metric is designed to calculate efficiency only in respect to the
+approximation of the value function, not the policy or any other
+property. The reason this metric is used is because both space savings and the
 deviation from the actual value play a large role. For any algorithm
 that attempts to calculate the value function, the algorithm is only
 useful if the space savings don't cause a large increase in error. 
@@ -462,7 +492,7 @@ error is simply
 The top term, however, depends on the algorithm this method is being
 compared to. For instance the space necessary to store all of the
 values for Q-learning explicitly is $|S| \times |A|$ for the reward
-function, R(s,a), and $|S|^2$ for the Q function, Q(s,a). Where $|S|$ is
+function, R(s,a), and $|S|\times|A|$ for the Q function, Q(s,a). Where $|S|$ is
 the cardinality of the set of states and $|A|$ is the cardinality of
 the set of actions.
 
@@ -473,7 +503,7 @@ cardinality of the set of states.
 Therefore for this project the efficiency metric is
 
 \[
-\eta = \frac{(|S|^2 + |S||A|) - (k|A| + k)}{|V^{*} - \hat{V}^{*}|}
+\eta = \frac{( 2|S||A|) - (k|A| + k)}{|V^{*} - \hat{V}^{*}|}
 \]
 
 With this metric if the value function error remains constant as the
@@ -510,26 +540,29 @@ The efficiency metrics for each of the PVFs are as follows
   \begin{tabular}{|l|l|l|l|}
   \hline
   {\bf k} & {\bf Space Savings} & {\bf Value Function Error} & $\eta$\\ \hline
-  25 & 45875 & 231.19 & 198.43 \\ \hline
-  50 & 40225 & 262  & 153.53 \\ \hline
-  75 & 34575 &  276.8 & 124.89 \\ \hline
+  25 & 675 & 231.19 & 2.92 \\ \hline
+  50 & 550 & 262      & 2.10  \\ \hline
+  75 & 425 &  276.8 & 1.54 \\ \hline
 \end{tabular}
 \end{table}
 \FloatBarrier
 
 As can be seen in the table for this particular experiment 25 basis
 functions is the most efficient in terms of reproducing the actual
-Value function. As the number of PVF's increased the efficiency
-decreased. This is due both to the space savings decreasing as well as
-the value function error increasing.
+Value function. This does not necessarily say that 25 basis functions
+best represents the policy, as the policy is mostly affected by
+ordering and the norm of the value function error says nothing about
+the ordering at each state. Still this is useful for illustrating how
+a large number of dimensions can be eliminated without the error
+becoming extremely large. 
 
 \subsection*{Problems}
 
 While the experiments performed using the RPI framework indicate that
-the algorithm does work in general there are a number of problems with
+the algorithm does work, in general there are a number of problems with
 it.
 
-For one the quality of the approximated value function is greatly
+First off, the quality of the approximated value function is greatly
 affected by the area of the state space that is sampled. If there are
 areas of the state space that aren't often visited and if these areas
 are missed in the sampling step then the basis functions will be based
@@ -546,25 +579,35 @@ confidence one can assume no states were missed.
 Another problem is that as shown while the algorithm will converge
 relatively quickly the approximation of the value function can be
 quite inaccurate. This leads to discrepancies in the policies. As seen
-in the policies comparison function while the Value function
+in the policies comparison section while the Value function
 approximation may look very similar to the actual Value function the
 small discrepancies can lead to widly different policies (although not
-necessarily incorrect ones). 
+necessarily incorrect ones). This is due to the policy being based on
+ordering of action values vs the value simply being based on the max action.
 
 During the experimentation there were
 instances when the agent would get stuck in a particular state or in a
 loop of states. In general increasing the samples and the number of
 basis functions solved these problems. However, it does point out that
-whil the approximation of the value function is good, it is not
+while the approximation of the value function is good, it is not
 perfect. And while the policy from the approximated value function may
-work for the majority of the states there are still cases where the
+work for the majority of the states, there are still cases where the
 policy can fail.
 
 \section{Future Work}
 
-Now that the protovalue basis functions and the RPI have been closely
-examined and understood the theory of Bayesian RL can be applied on
-top of it. As previously discussed Bayesian RL can be used to solve
+The simplest extension to this project would be to test the RPI
+framework on different problem domains. Other domains such as
+continuous ones are addressed in the RPI paper. It would be useful to
+further their work in evaluating the usefulness of this algorithm. It
+would also be useful to try to determine the properties that are
+likely to lead to a good convergence.
+
+Even without further experiments specifically regarding RPI, now that
+the RPI framework has been implemented and is understood, an attempt
+can be made to apply the theory of Bayesian RL on
+top of it.\footnote{See Appendix B for an overview of what is
+  referred to by Bayesian RL} Bayesian RL can be used to solve
 the exploration vs exploitation problem. Instead of using Bayesian RL
 with Q-learning, the Bayesian RL techniques could be applied to the
 RPI framework. This would hopefully allow the learned representations
@@ -572,9 +615,10 @@ to be generalized to similar problems in a domain.
 
 The Bayesian RL could also be used to provide insight into which parts
 of a new problem's state space should be sampled first. This would
-theoretically reduce the number of samples needed. As the basis
-functions and policies would simply need to be repaired when a new
-problem from the same domain was encountered.
+theoretically reduce the number of samples needed. As when a new
+problem from the same domain was encountered the basis
+functions and policies could most likely be repaired by sampling from
+the areas most likely to reveal new information.
 
 \section{Conclusion}
 
@@ -584,11 +628,12 @@ learning. Not only does it allow an agent to learn appropriate basis
 functions it also drastically cuts down on the amount of information
 that must be stored.
 
-While the results can vary based on the state space and actions in
-general the algorithm seems to function well while simultaneously
+While the results can vary based on the state space and actions, in
+general the algorithm seems to function well, while simultaneously
 providing tremendous space savings.
 
-\section{References}
+\bibliographystyle{unsrt}
+\bibliography{491_project.bib}
 
 \section{Appendix A - Experiment Programs}
 
@@ -600,7 +645,8 @@ The source code for this project is contained within a Github
 repository located at https://github.com/rhololkeolke/eecs\_491\_project
 
 The computer that is running the program requires python, scipy, numpy
-and the apgl libraries to function. These can be installed using the
+and the apgl libraries to function. \cite{numpy_developers_numpy_2012}
+\cite{enthought_scipy_2012} These can be installed using the
 standard python tools such as easy\_install and pip.  The lspiframework directory will also need to be added to the
 computer's PYTHONPATH environment variable.
 
@@ -614,11 +660,80 @@ where rooms.py is located in the lspi\_examples directory
 
 \section{Appendix B - Bayesian RL}
 
+As mentioned in the future work section one possible next step is to
+combine the RPI framework with something like Bayesian RL in order to
+try and generalize the solutions found for specific problems to the
+entire problem domain.
+
 \subsection*{Bayesian Reinforcement Learning}
 
+At its most basic level Bayesian Reinforcement Learning (Bayesian RL)
+attempts to solve the exploration vs exploitation problem. \cite{dearden_bayesian_1998} The
+exploration vs exploitation problem is the problem of how to choose
+when to exploit knowledge (i.e. execute the policy) and when to
+explore for new knowledge (i.e do something other than the
+policy). \cite{wyatt_exploration_1998}
+
+Standard Q-learning solves this problem by doing undirected
+exploration using algorithms such as $\epsilon$-greedy exploration and
+Boltzmann exploration. \cite{dearden_bayesian_1998} However, both of
+these techniques while useful are completely undirected. That is they
+are just as likely to ``explore'' a state that is well known as they
+are to explore a state that is novel (i.e. has not been seen
+before). It would be useful to direct the exploration so that when
+exploration should occur the exploration actually adds knowledge
+rather than simply reinforcing what is already known.
 
 \subsection*{Bayesian Exploration}
 
+In Bayesian Q-Learning by Dearden et al a metric for determing the
+usefulness of a exploring a new state is developed. \cite{dearden_bayesian_1998}This metric is
+referred to as the Myopic Value of Perfect Information
+(Myopic-VPI). The Myopic-VPI is determined by maintaining a
+distribution of the Q-values and then using the expected value of the
+distribution to compute the likelihood of learning new, useful
+information.
+
+In Model Based Bayesian Exploration, by Dearden et al, this idea of
+directed exploration is further refined so that instead of directly
+keeping distributions on the Q-values, distributions are kept on the
+possible models and then Q-values are derived from these
+models. \cite{dearden_model_1999} The distributions used are either
+Dirchlet or Sparse Dirchlet. This means that the shape of the
+distribution will always be Dirchlet as the Dirchlet is its own
+conjugate prior. This makes the updates relatively easy. Additionally
+the Dirchlet distribution can easily be found by counting the number
+of times a state transition and reward occur in the set of samples.
+
+In both of these techniques after obtaining a prior distribution it is necessary to sample from a
+distribution of Q-values which requires solving the MDP that is being
+sampled. As mentioned throughout this report solving an MDP with
+a tabular mapping of Q-values can be intractable in terms of memory
+and storage space.
+
 \subsection*{Bayesian Exploration with RPI}
+
+Combining Bayesian Exploration with RPI would theoretically provide a
+number of benefits. By using RPI to solve the MDP's that were being
+sampled the intractability of the MDP's can be resolved, albeit at the
+cost of approximation. Although as shown in the experiments section
+the approximate Value functions are quite close to the actual value
+function in many cases.
+
+The information from these sampled MDP's can then be applied to new
+unseen problems in the same domain. With the distributions learned
+from the sampled MDPs, theoretically, the basis functions can  in a sense be
+generalized to the entire problem domain.
+
+The combination of these two algorithms has been started. Currently a
+small test example uses the Sparse Dirchlet and standard Dirchlet
+distributions to estimate statistics about simple categories. For
+instance the code was tested with a 2 category problem which was
+supposed to represent coin flips. The coin flip probabilities were
+estimated properly within 3 decimal places for less than 100 samples.
+
+Using the code that manipulates these distributions as a basis the
+Model Based Bayesian Exploration paper techniques could be
+implemented in future work.
 
 \end{document}

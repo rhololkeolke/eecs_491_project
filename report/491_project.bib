@@ -1,0 +1,90 @@
+@misc{soumya_ray_eecs_2012,
+	title = {{EECS} 491: Artificial Intelligence {(Part} 3: Decision Making Under Uncertainty)},
+	url = {http://engr.case.edu/ray_soumya/eecs491_fall12/lecture15.pdf},
+	urldate = {2012-11-26},
+	author = {Soumya Ray},
+	month = oct,
+	year = {2012}
+},
+
+@book{richard_s._sutton_reinforcement_2005,
+	address = {Cambridge, Massachusetts and London, England},
+	title = {Reinforcement Learning: An Introduction},
+	url = {http://webdocs.cs.ualberta.ca/~sutton/book/ebook/node27.html},
+	urldate = {2012-11-26},
+	publisher = {The {MIT} Press},
+	author = {Richard S. Sutton and Andrew G. Barto},
+	month = jan,
+	year = {2005}
+},
+
+@misc{sridhar_mahadevan_proto-value_????,
+	title = {Proto-Value Functions: Developmental Reinforcement Learning},
+	url = {http://people.cs.umass.edu/~mahadeva/papers/final-paper.pdf},
+	author = {Sridhar Mahadevan}
+},
+
+@misc{sridhar_mahadevan_representation_????,
+	title = {Representation Policy Iteration: A Unified Framework for Learning Behavior and Representation},
+	url = {http://all.cs.umass.edu/pubs/2005/mahadevan_talkAAAI05.pdf},
+	publisher = {Autonomous Learning Laboratory - Department of Computer Science - University of Massachusetts, Amherst},
+	author = {Sridhar Mahadevan}
+},
+
+@misc{numpy_developers_numpy_2012,
+	title = {Numpy},
+	url = {http://numpy.scipy.org/},
+	author = {Numpy Developers},
+	year = {2012}
+},
+
+@misc{enthought_scipy_2012,
+	title = {{SciPy}},
+	url = {http://www.scipy.org/},
+	author = {Enthought},
+	year = {2012}
+},
+
+@article{lagoudakis_least-squares_2004,
+	title = {Least-squares policy iteration},
+	volume = {4},
+	abstract = {We propose a new approach to reinforcement learning for control problems which combines value-function approximation with linear architectures and approximate policy iteration. This new approach is motivated by the least-squares temporal-difference learning algorithm {(LSTD)} for prediction problems, which is known for its efficient use of sample experiences compared to pure temporal-difference algorithms. Heretofore, {LSTD} has not had a straightforward application to control problems mainly because {LSTD} learns the state value function of a fixed policy which cannot be used for action selection and control without a model of the underlying process. Our new algorithm, least-squares policy iteration {(LSPI)}, learns the state-action value function which allows for action selection without a model and for incremental policy improvement within a policy-iteration framework. {LSPI} is a model-free, off-policy method which can use efficiently (and reuse in each iteration) sample experiences collected in any manner. By separating the sample collection method, the choice of the linear approximation architecture, and the solution method, {LSPI} allows for focused attention on the distinct elements that contribute to practical reinforcement learning. {LSPI} is tested on the simple task of balancing an inverted pendulum and the harder task of balancing and riding a bicycle to a target location. In both cases, {LSPI} learns to control the pendulum or the bicycle by merely observing a relatively small number of trials where actions are selected randomly. {LSPI} is also compared against Q-learning (both with and without experience replay) using the same value function architecture. While {LSPI} achieves good performance fairly consistently on the difficult bicycle task, Q-learning variants were rarely able to balance for more than a small fraction of the time needed to reach the target location.},
+	language = {English},
+	number = {6},
+	journal = {{JOURNAL} {OF} {MACHINE} {LEARNING} {RESEARCH}},
+	author = {Lagoudakis, MG and Parr, R.},
+	year = {2004},
+	note = {{http://gateway.webofknowledge.com/gateway/Gateway.cgi?GWVersion=2\&SrcAuth=SerialsSolutions\&SrcApp=Summon\&KeyUT=000231002600007\&DestLinkType=FullRecord\&DestApp=WOS}},
+	keywords = {{ALGORITHMS}, approximate policy iteration, {ARTIFICIAL} {IN℡LIGENCE}, {AUTOMATION} \&amp, {COMPUTER} {SCIENCE}, {CONTROL} {SYSTEMS}, {FUNCTION} {APPROXIMATION}, least-squares methods, Markov decision processes, reinforcement learning, value-function approximation},
+	pages = {1107--1149}
+},
+
+@article{wyatt_exploration_1998,
+	title = {Exploration and inference in learning from reinforcement},
+	author = {Wyatt, J.},
+	year = {1998}
+},
+
+@inproceedings{dearden_bayesian_1998,
+	title = {Bayesian Q-learning},
+	booktitle = {Proceedings of the National Conference on Artificial Intelligence},
+	author = {Dearden, R. and Friedman, N. and Russell, S.},
+	year = {1998},
+	pages = {761–768}
+},
+
+@inproceedings{dearden_model_1999,
+	address = {San Francisco, {CA}, {USA}},
+	series = {{UAI'99}},
+	title = {Model based Bayesian exploration},
+	isbn = {1-55860-614-9},
+	url = {http://dl.acm.org/citation.cfm?id=2073796.2073814},
+	abstract = {Reinforcement learning systems are often concerned with balancing exploration of untested actions against exploitation of actions that are known to be good. The benefit of exploration can be estimated using the classical notion of Value of Information - the expected improvement in future decision quality arising from the information acquired by exploration. Estimating this quantity requires an assessment of the agent's uncertainty about its current value estimates for states. In this paper we investigate ways to represent and reason about this uncertainty in algorithms where the system attempts to learn a model of its environment. We explicitly represent uncertainty about the parameters of the model and build probability distributions over Q-values based on these. These distributions are used to compute a myopic approximation to the value of information for each action and hence to select the action that best balances exploration and exploitation},
+	urldate = {2012-12-12},
+	booktitle = {Proceedings of the Fifteenth conference on Uncertainty in artificial intelligence},
+	publisher = {Morgan Kaufmann Publishers Inc.},
+	author = {Dearden, Richard and Friedman, Nir and Andre, David},
+	year = {1999},
+	pages = {150–159},
+	file = {ACM Full Text PDF:/Users/rhol/Library/Application Support/Zotero/Profiles/19gm5gc1.default/zotero/storage/MU9UJ5AT/Dearden et al. - 1999 - Model based Bayesian exploration.pdf:application/pdf}
+},
