@@ -18,7 +18,7 @@ starting location.
 
 from lspiframework.simulator import Simulator as BaseSim
 from lspiframework.sample import Sample
-from lspiframework.policy import Policy, RandomPolicy
+from lspiframework.policy import Policy, RandomPolicy, ValuePolicy
 from lspiframework import lspi
 from protovalueframework import pvf
 import numpy as np
@@ -94,10 +94,10 @@ class Simulator(BaseSim):
         # if no action set is specified then used manhattan
         if config.get('actions', 'manhattan').lower() == 'manhattan':
             Simulator.actions = 4
-            self.actions = 'manhattan'
+            self.actionset = 'manhattan'
         elif config['actions'].lower() == 'diagonal':
             Simulator.actions = 8
-            self.actions = 'diagonal'
+            self.actionset = 'diagonal'
         else:
             print "Invalid action set specified"
             print "Available options are manhattan and diagonal"
@@ -409,11 +409,39 @@ def watch_execution(sim, policy, state=None, maxsteps=500):
 
     if absorb:
         print Color.green("Agent Reached Goal State %s with reward of %f" % (sim.state, sample.reward))
+        success = True
     else:
         print Color.red("Agent did not reach a goal state within %i steps!" % maxsteps)
+        success = False
 
     print "Total Reward: %f" % totreward
     print "Reward per Step: %f" % (totreward/steps)
+
+    return success, totreward, steps, (totreward/steps)
+
+def test_execution(sim, policy, state=None, maxsteps=500):
+    absorb = False
+    sim.reset(state)
+
+    totreward = 0.0
+    steps = 0
+    while not absorb and steps < maxsteps:
+        steps += 1
+        stateindex = sim.state_to_index(sim.state)
+        action = policy.select_action(stateindex)[0]
+
+        sample = sim.execute(action)
+
+        totreward += sample.reward
+        absorb = sample.absorb
+
+    if absorb:
+        success = True
+    else:
+        success = False
+
+    return success, totreward, steps, (totreward/steps)
+    
 
 def print_action(action):
     """
@@ -497,22 +525,21 @@ def graph_laplacian_basis_functions(sim, graph):
     
     fig = plt.figure()
     plt.subplot(2,2,1)
-    plt.imshow(basis_functions[:,0].reshape((sim.h, sim.w)))
+    plt.imshow(basis_functions[:,0].reshape((sim.h, sim.w)).T, interpolation='none')
     plt.colorbar()
 
     plt.subplot(2,2,2)
-    plt.imshow(basis_functions[:,1].reshape((sim.h, sim.w)))
+    plt.imshow(basis_functions[:,1].reshape((sim.h, sim.w)).T, interpolation='none')
     plt.colorbar()
 
     plt.subplot(2,2,3)
-    plt.imshow(basis_functions[:,2].reshape((sim.h, sim.w)))
+    plt.imshow(basis_functions[:,2].reshape((sim.h, sim.w)).T, interpolation='none')
     plt.colorbar()
 
     plt.subplot(2,2,4)
-    plt.imshow(basis_functions[:,3].reshape((sim.h, sim.w)))
+    plt.imshow(basis_functions[:,3].reshape((sim.h, sim.w)).T, interpolation='none')
     plt.colorbar()
-
-    plt.show()
+    return fig
 
 def value_iteration(sim, discount=.8, epsilon=10**-5, maxiter=500):
     """
@@ -567,7 +594,11 @@ def value_iteration(sim, discount=.8, epsilon=10**-5, maxiter=500):
         distance = np.linalg.norm(Vnew-Vold)
         Vold = Vnew
 
-    return Vnew
+    for state in sim.absorb:
+        index = sim.state_to_index(state)
+        Vnew[index, 0] = sim.absorb[state]
+        
+    return Vnew, P, R
 
 def display_value_function(sim, discount=.8, epsilon=10**-5, maxiter=500, dim=2):
     """
@@ -579,7 +610,7 @@ def display_value_function(sim, discount=.8, epsilon=10**-5, maxiter=500, dim=2)
     Returns the Value function used
     """
 
-    V = value_iteration(sim, discount, epsilon, maxiter)
+    V = value_iteration(sim, discount, epsilon, maxiter)[0]
 
     if dim == 2:
         plt.imshow(V.reshape((sim.h, sim.w)).T, interpolation='none')
@@ -591,6 +622,19 @@ def display_value_function(sim, discount=.8, epsilon=10**-5, maxiter=500, dim=2)
         
     return V
 
+def initialize_value_function_policy(sim, discount=.8, epsilon=10**-5, maxiter=500, V=None, P=None, R=None):
+    """
+    Initializes a value function policy. This useful
+    for comparing the estimated best policy with the actual best policy
+    """
+    if V is None or P is None or R is None:
+        V, P, R = value_iteration(sim, discount, epsilon, maxiter)
+
+
+    pi = ValuePolicy(sim, P, R, V, discount)
+
+    return pi
+
 if __name__ == '__main__':
     import sys
     import pdb
@@ -598,8 +642,10 @@ if __name__ == '__main__':
     path = sys.argv[1]
 
     sim = Simulator(path)
+
+    print sim
     
-    k = 21
+    k = 99
     maxiter = 200
     epsilon = 10**(-12)
     samples = collect_samples(sim)
@@ -619,6 +665,8 @@ if __name__ == '__main__':
     final_policy, all_policies = lspi.lspi(maxiter, epsilon,
                                            samples, policy)
 
+    value_policy = initialize_value_function_policy(sim)
+    
     plt.figure()
     plt.subplot(2,2,1)
     display_qvalues(sim, final_policy)
@@ -636,6 +684,22 @@ if __name__ == '__main__':
     plt.subplot(2,2,4)
     display_value_function(sim, dim=1)
     plt.show()
-    
-    watch_execution(sim, final_policy, maxsteps=20)
 
+    plt.figure()
+    plt.subplot(1,2,1)
+    display_policy(sim, final_policy)
+    plt.title('Final Policy')
+    plt.subplot(1,2,2)
+    display_policy(sim, value_policy)
+    plt.title('Value Policy')
+    plt.show()
+
+    watch_execution(sim, final_policy, state=(1,1), maxsteps=20)
+
+    print "Finished executing final approximated policy"
+    sleep(1)
+
+    watch_execution(sim, value_policy, state=(1,1), maxsteps=20)
+
+    print "Finished executing value policy"
+    pdb.set_trace()

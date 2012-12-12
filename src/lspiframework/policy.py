@@ -99,5 +99,57 @@ class RandomPolicy(Policy):
     
     def __init__(self, explore, discount, actions):
         super(RandomPolicy, self).__init__(explore, discount,
-                                           actions, RandomPolicy.basis)
-        
+                                           actions, fake_basis)
+
+class ValuePolicy(object):
+    """
+    Uses a value function to select the actions performed
+    """
+
+    def __init__(self, sim, T, R, V, discount):
+        """
+        Initializes a new value policy
+        """
+        self.T = T
+        self.R = R
+        self.V = V
+        self.sim = sim
+        self.discount = discount
+
+    def select_action(self, index):
+        """
+        Computes this policy at the given state
+
+        Returns the action that is picked and the evaluation
+        of the basis at the pair (state, action)
+        """
+        # select whichever action
+        state = self.sim.index_to_state(index)
+
+        bestv = float('-inf')
+        besta = []
+
+        for a in range(self.sim.actions):
+            sprimes = [index, self.sim.get_next_state(state, a)[1]]
+            sprimes = list(set(sprimes))
+
+            Va = 0
+            for sprime in sprimes:
+                Va += self.T[index, sprime, a]*(self.R[index, sprime] +
+                                                self.discount*self.V[sprime, 0])
+
+            if Va > bestv:
+                bestv = Va
+                besta = [a]
+            elif Va == bestv:
+                besta.append(a)
+
+        which = np.random.randint(len(besta))
+        return besta[which], bestv
+
+def fake_basis(state=None, action=None):
+    """
+    Just a dummy basis function
+    that will allow this policy to act randomly
+    """
+    return np.ones(1)
