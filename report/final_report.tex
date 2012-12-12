@@ -21,31 +21,180 @@ Learning Basis Functions\\
 
 \maketitle
 
+\section{Abstract}
+
+This project focused on a reinforcement learning technique known as
+Representation Policy Iteration (RPI). RPI utilizes samples for a
+state space to determine basis functions that are used for
+approximation. Traditionally these basis functions have been hand
+designed by those creating the reinforcement learning. RPI on the
+other hand utilizes information about the state space to create an
+approximation. The experiments performed with this framework indicate
+that it is indeed a useful algorithm and that while in some cases it may require a
+large number of samples to properly converge, when it does converge
+the space savings are quite large. All of this experimentation was
+done with the intention of understanding the RPI framework so that it
+could be used with in conjunction with Bayesian Reinforcement Learning.
+
 \tableofcontents
 \newpage
 \listoffigures
 
-\section{Abstract}
-
 \section{Background}
 
-\subsection*{MDP}
+\subsection*{Markov Decision Process}
 
-\subsection*{Value Iteration and Q-Learning}
+A Markov Decision Process (MDP) is a formal representation of the
+problem of making actions in an environment that is not entirely
+controlled by the agent. To solve an MDP an agent must determine a
+policy that maximizes its expected reward up to some time in the
+future.
 
-\subsection*{LSPI}
+An MDP is specified by the tuple $(S, A, P_a(s,s'), R_a(s,s'))$ where
+S is the set of states in the environment, A is the set of actions the
+agent can perform, $P_a(s,s')$ is the transition model and $R_a(s,s')$
+specifies the reward model.
+
+MDP's have been a major topic of study for a number of years and so a
+number of techniques for solving them have been developed. These
+include the model based value iteration algorithm and the model free
+Q-learning algorithm. Many of the algorithms are derivatives of these
+two algorithms.
+
+Regardless of the technique used to solve the MDP in order for the
+solution to be considered optimal it must satisfy the Bellman Optimality
+criterion. That is
+
+\[
+V^{\pi*} (s) = max_a ( R(s, a) + \gamma \Sigma_{s'} P(s, a, s')
+V^{\pi*}(s'))
+\]
+
+where $V^{\pi*}$ is the optimal value function and $\gamma$ is the
+discount factor. All techniques are trying to solve this criterion
+because it is necessary and sufficient for optimality.
+
+The subject
+of this project was to examine one such technique known as
+Representation Policy Iteration (RPI). And to consider ways in which
+it could be incorporated into the Bayesian RL framework.
 
 \subsection*{Q-function Approximation}
 
+In general when using Q-learning or value iteration one generally runs
+into the ``curse of dimensionality'' for any reasonable real world
+problem. For this reason instead of explicitly tracking $Q^*(s,a)$ for all
+states and actions $Q*(s,a)$ is approximated. Often the approximation
+is done by hand using heuristics from expert knowledge.
+
+For instance considering the RTS scenario used in the second
+programming assignment of this class, that is two armies fighting each
+other, some basis functions may be distance to closest enemy, health
+of current unit, and health of enemy unit. All of these properties are
+computed based on current or previous information.
+
+The Q function can then be approximated by weighting each function and
+combining them linearly using the following equation
+
+\[
+Q^*(s,a) \approx \hat{Q}^*(s,a) = \Sigma_j \phi_j(s,a)w_j^*
+\]
+
+Obviously it would be ideal if these basis functions could be
+automatically determined. As in order to come up with good basis
+functions one must already have knowledge about the problem domain
+that the reinforcement learning agent is trying to solve. The RPI
+framework provides a solution to the problem of automatically creating
+a set of basis functions for the domain.
+
+One thing to note about the basis function approximation is that it
+ can have limited success as the mapping of
+the solution onto the basis functions may break the Bellman backup
+operator. That is the mapping may no longer be a contraction mapping
+and so when using basis functions as an approximation the
+reinforcement learning algorithms are no longer guaranteed to converge.
+
 \subsection*{Learning Basis Functions}
+
+The RPI framework utilizes previous work done by Mahadevan {\bf
+  CITATION} on Proto-Value Functions (PVFs). Protovalue functions utilize a
+lot of the ideas discussed in the field of principle component
+analysis. At their basic level proto-value functions are set of
+eigenvectors on the representation of some problem's state space.
+
+The PVFs take advantage of the graph operator known as the normalized
+graph Laplacian (however, other operators can be
+used such as the unnormalized graph Laplacian). The normalized graph
+Laplacian is equal to the following $L_n = D^{1/2}LD^{1/2}$ where D is
+the degree matrix of the graph and $L=D - A$ where A is the adjacency
+matrix. 
+
+By constructing a graph of the state space from a set of
+samples, information about the structure of the state space is
+represented. The graph laplacian is an operator performed on that
+graph that transforms the graph representation into a special matrix
+form. This matrix form can be used with eigen vectors and eigen values
+to do a form of principal component analysis on the graph. A subset of
+these eigen vectors can then be chosen and used as the basis functions.
+
+The eigen vectors of the graph Laplacian form good basis functions for
+2 main reasons. The first is that they are orthogonal meaning that
+there is no redundancy when the actual value is approximated by being
+projected onto these basis functions. Secondly the graph Laplacian
+encodes structural information about the space and the eigen vectors
+capture key parts of that information.
+
+\subsection*{Least-Squares Policy Iteration}
+
+Least-Squares Policy Iteration (LSPI) is a technique for solving an
+MDP by approximating the value function using a set of basis functions
+or features. LSPI is an offline algorithm. It converges to a policy
+based on a set of sample tuples.
+
+Each sample tuple is of the following form
+
+\[
+(s, a, r, s')
+\]
+
+Where s is the current state, a is the action taken, r is the reward,
+and s' is the resulting state. LSPI uses a set of basis functions and
+weights just like discussed earlier. When the basis functions and
+weights are represented as matrices the equation for the approximate Q
+value becomes
+
+\[
+\hat{Q}^*(s,a) = \Phi w^*
+\]
+
+In this equation $w^*$ is a column vector of k weights, where k is the
+number of basis functions contained within $\Phi$. $\Phi$ is an
+$|S||A| \times k$ matrix where $|S|$ is the cardinality of the set of
+states and $|A|$ is the cardinality of the set of actions. Each row of
+$\Phi$ contains the values of all of the basis functions for a single
+(s,a) and each column contains the values of a single basis function
+for all (s,a).
+
+The paper that introduces LSPI derives an explict formula that can be
+used to solve for the weights. {\bf citation} The formula is the
+following
+
+\[ Aw^* = b\]
+
+A and b are approximated using the samples and then the linear
+equation is solved explicitly for the weights. This process is
+repeated until the policy specified by the weights changes by no more
+than $\epsilon$ or the maximum number of iterations is reached.
 
 \subsection*{Representation Policy Iteration (RPI)}
 
-\subsection*{Bayesian Reinforcement Learning}
+Representation Policy Iteration (RPI) combines the use of PVFs with
+the LSPI algorithm to create an offline algorithm that can
+approximately solve an MDP.
 
-\subsection*{Bayesian Exploration}
-
-\subsection*{Bayesian Exploration with RPI}
+The basic process is to sample the state space, then construct the
+PVFs then run the LSPI algorithm. The RPI framework is what was
+experimented with in this project.
 
 \section{Experimental Results}
 
@@ -54,6 +203,7 @@ Learning Basis Functions\\
 \FloatBarrier
 \begin{figure}[h!]
 \centering
+
 \caption{Comparison of Actual Value Function vs Approximated Value
   Function for Simple 10x10 2 Room problem and 25 PVF}
 \label{valueVsQ1}
@@ -63,6 +213,7 @@ Learning Basis Functions\\
 \FloatBarrier
 \begin{figure}[h!]
 \centering
+\includegraphics[scale=.5]{images/paper_example_big_V_function_comparison_k75_s5000_graph01.png}
 \caption{Comparison of Actual Value Function vs Approximated Value
   Function for Simple 15x15 2 Room problem and 75 PVF}
 \label{valueVsQ2}
@@ -72,6 +223,7 @@ Learning Basis Functions\\
 \FloatBarrier
 \begin{figure}[h!]
 \centering
+
 \caption{Comparison of Actual Value Function vs Approximated Value
   Function for Simple 10x10 2 Auto-generated maze problem and 50 PVF}
 \label{valueVsQ3}
@@ -360,5 +512,34 @@ providing tremendous space savings.
 \section{References}
 
 \section{Appendix A - Experiment Programs}
+
+A number of experimental programs were created for this project. In
+general the programs should be capable of applying to any problem
+domain so long as a few functions are implemented for the domain. 
+
+The source code for this project is contained within a Github
+repository located at https://github.com/rhololkeolke/eecs\_491\_project
+
+The computer that is running the program requires python, scipy, numpy
+and the apgl libraries to function. These can be installed using the
+standard python tools such as easy\_install and pip.  The lspiframework directory will also need to be added to the
+computer's PYTHONPATH environment variable.
+
+To run the code the basic usage is 
+
+\vspace{5 mm}
+{\bf python rooms.py /path/to/map.yaml}
+\vspace{5 mm}
+
+where rooms.py is located in the lspi\_examples directory
+
+\section{Appendix B - Bayesian RL}
+
+\subsection*{Bayesian Reinforcement Learning}
+
+
+\subsection*{Bayesian Exploration}
+
+\subsection*{Bayesian Exploration with RPI}
 
 \end{document}
