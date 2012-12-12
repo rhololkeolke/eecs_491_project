@@ -21,6 +21,7 @@ from lspiframework.sample import Sample
 from lspiframework.policy import Policy, RandomPolicy, ValuePolicy
 from lspiframework import lspi
 from protovalueframework import pvf
+from numpy import linalg as LA
 import numpy as np
 import yaml
 from terminal import Color
@@ -645,11 +646,11 @@ if __name__ == '__main__':
 
     print sim
     
-    k = 99
+    k = 20
     maxiter = 200
     epsilon = 10**(-12)
     samples = collect_samples(sim)
-    while len(samples) < 5000:
+    if len(samples) < 5000:
         samples += collect_samples(sim)
     discount = .8
 
@@ -669,7 +670,7 @@ if __name__ == '__main__':
     
     plt.figure()
     plt.subplot(2,2,1)
-    display_qvalues(sim, final_policy)
+    approxV = display_qvalues(sim, final_policy)
     plt.title('Estimated Value Function')
     plt.subplot(2,2,2)
     display_qvalues(sim, final_policy, dim=1)
@@ -680,10 +681,10 @@ if __name__ == '__main__':
     #lt.show()
 
     plt.subplot(2,2,3)
-    display_value_function(sim)
+    V = display_value_function(sim)[0]
     plt.subplot(2,2,4)
     display_value_function(sim, dim=1)
-    plt.show()
+    #plt.show()
 
     plt.figure()
     plt.subplot(1,2,1)
@@ -692,14 +693,19 @@ if __name__ == '__main__':
     plt.subplot(1,2,2)
     display_policy(sim, value_policy)
     plt.title('Value Policy')
-    plt.show()
+    #plt.show()
 
-    watch_execution(sim, final_policy, state=(1,1), maxsteps=20)
+    #watch_execution(sim, final_policy, state=(1,1), maxsteps=20)
 
     print "Finished executing final approximated policy"
     sleep(1)
 
-    watch_execution(sim, value_policy, state=(1,1), maxsteps=20)
+    #watch_execution(sim, value_policy, state=(1,1), maxsteps=20)
 
     print "Finished executing value policy"
+
+    space_savings = (sim.states**2 + sim.states*sim.actions)-(k*sim.states + k)
+    L2norm = LA.norm(V - approxV.reshape((sim.states, 1)), 2)
+    eta = space_savings/L2norm
+                     
     pdb.set_trace()
